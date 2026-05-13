@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { createStripeClient } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
+  }
+
   const body = await req.text();
   const signature = req.headers.get("stripe-signature")!;
 
+  const stripe = createStripeClient();
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error("Stripe webhook signature error:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });

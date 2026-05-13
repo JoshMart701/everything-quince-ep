@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, PLANS } from "@/lib/stripe";
+import { createStripeClient, PLANS } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
+  }
+
   try {
     const { plan } = await req.json();
     const supabase = await createClient();
@@ -29,6 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
+    const stripe = createStripeClient();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
     const session = await stripe.checkout.sessions.create({

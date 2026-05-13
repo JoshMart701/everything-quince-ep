@@ -5,6 +5,10 @@ import { sendAnnouncementToVendors } from "@/lib/resend";
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ error: "Email service not configured" }, { status: 503 });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

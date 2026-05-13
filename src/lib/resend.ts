@@ -1,9 +1,12 @@
 import { Resend } from "resend";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
-
 export const FROM = process.env.RESEND_FROM_EMAIL ?? "noreply@everythingquince.com";
 export const OWNER = process.env.OWNER_EMAIL ?? "owner@everythingquince.com";
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function sendQuoteNotificationToOwner(lead: {
   name: string;
@@ -16,6 +19,8 @@ export async function sendQuoteNotificationToOwner(lead: {
   categories: string[];
   message?: string;
 }) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: OWNER,
@@ -42,6 +47,8 @@ export async function sendQuoteConfirmationToClient(lead: {
   email: string;
   categories: string[];
 }) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: lead.email,
@@ -70,7 +77,7 @@ export async function sendQuoteConfirmationToClient(lead: {
             </a>
           </div>
           <p style="color: #3D1A2E/60; font-size: 14px;">
-            With love & glitter,<br/>
+            With love &amp; glitter,<br/>
             <strong>The Everything Quince EP Team</strong>
           </p>
         </div>
@@ -91,6 +98,8 @@ export async function sendLeadToVendor(vendor: {
   budgetRange?: string;
   categories: string[];
 }) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: vendor.email,
@@ -126,6 +135,8 @@ export async function sendVendorApprovalEmail(vendor: {
   email: string;
   businessName: string;
 }) {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: vendor.email,
@@ -162,6 +173,8 @@ export async function sendAnnouncementToVendors(
   subject: string,
   body: string
 ) {
+  const resend = getResend();
+  if (!resend) return;
   const batches = [];
   for (let i = 0; i < emails.length; i += 50) {
     batches.push(emails.slice(i, i + 50));
