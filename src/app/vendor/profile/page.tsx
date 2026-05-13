@@ -32,7 +32,6 @@ export default function VendorProfilePage() {
   const [vendor, setVendor] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const supabase = createClient();
 
   const { register, handleSubmit, reset, watch, formState: { errors, isDirty } } = useForm<ProfileValues, unknown, ProfileValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,6 +43,7 @@ export default function VendorProfilePage() {
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/vendor/login"); return; }
 
@@ -76,6 +76,7 @@ export default function VendorProfilePage() {
   const onSubmit = async (values: ProfileValues) => {
     if (!vendor) return;
     setIsSaving(true);
+    const supabase = createClient();
 
     const tags = values.tags
       ? values.tags.split(",").map(t => t.trim()).filter(Boolean)
@@ -283,6 +284,7 @@ export default function VendorProfilePage() {
                 <p className="text-xs text-[#3D1A2E]/30 font-body mt-1">JPG, PNG up to 10MB each</p>
                 <input type="file" multiple accept="image/*" className="hidden" onChange={async (e) => {
                   if (!e.target.files || !vendor) return;
+                  const supabase = createClient();
                   const files = Array.from(e.target.files);
                   const urls: string[] = [];
                   for (const file of files) {
@@ -324,6 +326,7 @@ export default function VendorProfilePage() {
                       type="button"
                       onClick={async () => {
                         const newUrls = vendor.gallery_urls.filter((_: string, idx: number) => idx !== i);
+                        const supabase = createClient();
                         await supabase.from("vendors").update({ gallery_urls: newUrls }).eq("id", vendor.id);
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setVendor((prev: any) => ({ ...prev, gallery_urls: newUrls }));

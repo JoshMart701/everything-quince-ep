@@ -40,10 +40,10 @@ export default function VendorCalendarPage() {
   const [selectedStatus, setSelectedStatus] = useState<DateStatus>("available");
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     const load = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/vendor/login"); return; }
 
@@ -77,6 +77,7 @@ export default function VendorCalendarPage() {
   const saveCalendar = async () => {
     if (!vendor) return;
     setIsSaving(true);
+    const supabase = createClient();
     const { error } = await supabase
       .from("vendors")
       .update({ availability, updated_at: new Date().toISOString() })

@@ -21,7 +21,6 @@ function newLineItem(): LineItem {
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const supabase = createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [vendor, setVendor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +45,7 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     const load = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/vendor/login"); return; }
 
@@ -74,6 +74,7 @@ export default function NewInvoicePage() {
       return;
     }
     setIsSaving(true);
+    const supabase = createClient();
 
     const { error } = await supabase.from("invoices").insert({
       vendor_id: vendor.id,

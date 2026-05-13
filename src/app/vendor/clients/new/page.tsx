@@ -9,7 +9,6 @@ import { toast } from "sonner";
 
 export default function NewClientPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
@@ -26,6 +25,7 @@ export default function NewClientPage() {
 
   useEffect(() => {
     const load = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/vendor/login"); return; }
       const { data: v } = await supabase
@@ -45,6 +45,7 @@ export default function NewClientPage() {
     e.preventDefault();
     if (!vendorId || !form.name.trim()) { toast.error("Name is required"); return; }
     setIsSaving(true);
+    const supabase = createClient();
 
     const { error } = await supabase.from("clients").insert({
       vendor_id: vendorId,

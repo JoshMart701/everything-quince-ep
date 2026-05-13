@@ -36,10 +36,9 @@ export default function VendorReviewsPage() {
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
   useEffect(() => {
     const load = async () => {
+      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/vendor/login"); return; }
 
@@ -71,6 +70,7 @@ export default function VendorReviewsPage() {
     const reply = replyDraft[reviewId]?.trim();
     if (!reply) return;
     setIsSaving(reviewId);
+    const supabase = createClient();
 
     const { error } = await supabase
       .from("reviews")
