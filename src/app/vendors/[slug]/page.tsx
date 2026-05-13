@@ -9,6 +9,8 @@ import { VENDOR_CATEGORIES } from "@/lib/constants";
 import { MapPin, Phone, Globe, Star, ChevronLeft } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 type Props = { params: { slug: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

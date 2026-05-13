@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Users, Plus, ChevronLeft, Calendar, Phone, Mail } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 export default async function VendorClientsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

@@ -9,6 +9,8 @@ import AdminVendorTable from "./AdminVendorTable";
 import AdminLeadsTable from "./AdminLeadsTable";
 import AdminAnnouncementForm from "./AdminAnnouncementForm";
 
+export const dynamic = 'force-dynamic';
+
 async function getAdminData() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

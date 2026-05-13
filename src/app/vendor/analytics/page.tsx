@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { BarChart2, ChevronLeft, Eye, Users, TrendingUp } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function VendorAnalyticsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
