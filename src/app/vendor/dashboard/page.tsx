@@ -9,6 +9,8 @@ import {
 import { PLANS } from "@/lib/stripe";
 import { formatDate } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 async function getVendorData() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

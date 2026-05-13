@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FileText, Plus, ChevronLeft } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 export default async function VendorInvoicesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
