@@ -7,10 +7,11 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: ["/admin", "/vendor/dashboard", "/vendor/leads", "/vendor/analytics", "/vendor/clients", "/vendor/invoices", "/api/"],
+        allow: ["/", "/vendors", "/blog", "/categories/", "/cities/", "/gallery", "/budget-calculator", "/planning-checklist", "/get-quotes"],
+        disallow: ["/admin", "/vendor/dashboard", "/vendor/leads", "/vendor/analytics", "/vendor/clients", "/vendor/invoices", "/vendor/calendar", "/vendor/profile", "/vendor/reviews", "/api/"],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,
+    host: BASE,
   };
 }

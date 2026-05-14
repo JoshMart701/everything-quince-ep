@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Gallery", href: "/#gallery" },
   { label: "Budget Calculator", href: "/#budget" },
   { label: "Planning Checklist", href: "/#checklist" },
+  { label: "Planning Blog", href: "/blog" },
   { label: "Get Quotes", href: "/#quotes" },
 ];
 

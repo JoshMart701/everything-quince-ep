@@ -5,8 +5,23 @@ import VendorsListClient from "./VendorsListClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Find Quinceañera Vendors in El Paso, TX",
-  description: "Browse all quinceañera vendors in El Paso, Horizon City, Socorro, and Las Cruces. Filter by category, city, and rating to find your perfect match.",
+  title: "Quinceañera Vendors in El Paso, TX — Venues, Photographers, DJs & More",
+  description:
+    "Find trusted quinceañera vendors in El Paso, TX. Browse venues, photographers, DJs, caterers, dress boutiques, florists, hair & makeup artists, and more. Compare prices and get free quotes.",
+  keywords: [
+    "quinceañera vendors El Paso TX",
+    "quince vendors El Paso",
+    "quinceañera photographer El Paso",
+    "quinceañera venue El Paso TX",
+    "quinceañera DJ El Paso",
+    "quinceañera catering El Paso",
+    "quinceañera dress El Paso TX",
+  ],
+  openGraph: {
+    type: "website",
+    title: "Quinceañera Vendors in El Paso, TX",
+    description: "Find trusted quinceañera venues, photographers, DJs, caterers, dresses, and more in El Paso, TX.",
+  },
 };
 
 export default function VendorsPage() {
