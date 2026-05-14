@@ -27,9 +27,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!vendor) return {};
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://everythingquince.com";
+  const catLabel = vendor.category.replace(/-/g, " ");
+  const title = `${vendor.business_name} | Quinceañera ${catLabel} in ${vendor.city}, TX`;
+  const description = vendor.description
+    ?? `${vendor.business_name} — professional quinceañera ${catLabel} in ${vendor.city}, TX. Get a free quote today.`;
+
   return {
-    title: `${vendor.business_name} — Quinceañera ${vendor.category} in ${vendor.city}`,
-    description: vendor.description ?? `${vendor.business_name} offers professional quinceañera services in ${vendor.city}, TX.`,
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: `${appUrl}/vendors/${params.slug}`,
+    },
+    twitter: { card: "summary", title, description },
   };
 }
 
@@ -54,9 +67,45 @@ export default async function VendorDetailPage({ params }: Props) {
     .order("created_at", { ascending: false });
 
   const catInfo = VENDOR_CATEGORIES.find((c) => c.slug === vendor.category);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://everythingquince.com";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: vendor.business_name,
+    description: vendor.description ?? undefined,
+    telephone: vendor.phone ?? undefined,
+    url: vendor.website ?? `${appUrl}/vendors/${vendor.slug}`,
+    image: vendor.logo_url ?? undefined,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: vendor.address ?? undefined,
+      addressLocality: vendor.city,
+      addressRegion: vendor.state,
+      postalCode: vendor.zip ?? undefined,
+      addressCountry: "US",
+    },
+    ...(vendor.review_count > 0 && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: String(vendor.average_rating),
+        reviewCount: String(vendor.review_count),
+        bestRating: "5",
+        worstRating: "1",
+      },
+    }),
+    ...(vendor.starting_price && {
+      priceRange: `From $${vendor.starting_price}`,
+    }),
+    sameAs: vendor.website ? [vendor.website] : undefined,
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
       <main className="pt-20">
         {/* Cover / Header */}
