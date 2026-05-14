@@ -11,14 +11,17 @@ import { formatDate } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 type Props = { params: { slug: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient();
+  const col = UUID_RE.test(params.slug) ? "id" : "slug";
   const { data: vendor } = await supabase
     .from("vendors")
     .select("business_name, description, category, city")
-    .or(`slug.eq.${params.slug},id.eq.${params.slug}`)
+    .eq(col, params.slug)
     .eq("status", "approved")
     .single();
 
@@ -32,11 +35,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function VendorDetailPage({ params }: Props) {
   const supabase = await createClient();
+  const col = UUID_RE.test(params.slug) ? "id" : "slug";
 
   const { data: vendor } = await supabase
     .from("vendors")
     .select("*")
-    .or(`slug.eq.${params.slug},id.eq.${params.slug}`)
+    .eq(col, params.slug)
     .eq("status", "approved")
     .single();
 
