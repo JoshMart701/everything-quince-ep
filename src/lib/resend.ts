@@ -168,6 +168,71 @@ export async function sendVendorApprovalEmail(vendor: {
   });
 }
 
+export async function sendVendorSubmissionConfirmation(vendor: {
+  email: string;
+  businessName: string;
+}) {
+  const resend = getResend();
+  if (!resend) return;
+  await resend.emails.send({
+    from: FROM,
+    to: vendor.email,
+    subject: "We received your listing! 🌹",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #3D1A2E, #C4547A); padding: 40px; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: white; font-size: 28px; margin: 0;">Everything Quince EP</h1>
+          <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0;">El Paso's Quinceañera Planning Hub</p>
+        </div>
+        <div style="background: #FDF7F0; padding: 40px; border-radius: 0 0 12px 12px; border: 1px solid #f3ddb9;">
+          <h2 style="color: #3D1A2E;">¡Gracias, ${vendor.businessName}! 🌹</h2>
+          <p style="color: #3D1A2E; line-height: 1.6;">
+            We received your listing and our team will review it within <strong>1–2 business days</strong>.
+            You'll get another email the moment it's approved and live in the directory.
+          </p>
+          <p style="color: #3D1A2E; line-height: 1.6;">
+            In the meantime, you can log in to your dashboard to preview your listing and get ready for your first leads!
+          </p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/vendor/dashboard"
+               style="background: #C4547A; color: white; padding: 14px 28px; border-radius: 50px; text-decoration: none; font-weight: 600;">
+              Go to Your Dashboard
+            </a>
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            Questions? Reply to this email and we'll get back to you.<br/>
+            — The Everything Quince EP Team
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+export async function sendNewVendorNotificationToOwner(vendor: {
+  businessName: string;
+  email: string;
+  category: string;
+  city: string;
+}) {
+  const resend = getResend();
+  if (!resend) return;
+  await resend.emails.send({
+    from: FROM,
+    to: OWNER,
+    subject: `New vendor listing: ${vendor.businessName}`,
+    html: `
+      <h2>New Vendor Listing — Everything Quince EP</h2>
+      <p><strong>Business:</strong> ${vendor.businessName}</p>
+      <p><strong>Email:</strong> ${vendor.email}</p>
+      <p><strong>Category:</strong> ${vendor.category}</p>
+      <p><strong>City:</strong> ${vendor.city}</p>
+      <hr/>
+      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/vendors">Review in Admin → Vendor Management</a></p>
+    `,
+  });
+}
+
 export async function sendAnnouncementToVendors(
   emails: string[],
   subject: string,

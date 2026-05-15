@@ -61,8 +61,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect already-logged-in users away from login/signup
-  if ((pathname === "/vendor/login" || pathname === "/vendor/signup") && user) {
+  // Redirect already-logged-in users away from login/signup/list-your-business
+  if ((pathname === "/vendor/login" || pathname === "/vendor/signup" || pathname === "/list-your-business") && user) {
     const dashUrl = request.nextUrl.clone();
     dashUrl.pathname = "/vendor/dashboard";
     return NextResponse.redirect(dashUrl);
