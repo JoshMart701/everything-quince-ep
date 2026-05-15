@@ -10,14 +10,14 @@ const GALLERY_ITEMS = [
   { id: 2, src: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80", alt: "Garden ceremony", category: "venues", tags: ["outdoor", "garden"] },
   { id: 3, src: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=600&q=80", alt: "Floral decorations", category: "florals", tags: ["flowers", "centerpieces"] },
   { id: 4, src: "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&q=80", alt: "Three-tier celebration cake", category: "cakes", tags: ["cake", "dessert"] },
-  { id: 5, src: "https://images.unsplash.com/photo-1570174007290-73fb32e77379?w=600&q=80", alt: "Pink quinceañera dress", category: "dresses", tags: ["dress", "pink", "gown"] },
+  { id: 5, src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80", alt: "Quinceañera portrait and elegance", category: "dresses", tags: ["dress", "elegance", "portrait"] },
   { id: 6, src: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600&q=80", alt: "Reception dance floor", category: "entertainment", tags: ["dance", "party"] },
   { id: 7, src: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&q=80", alt: "Hair and makeup", category: "beauty", tags: ["makeup", "hair"] },
   { id: 8, src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80", alt: "Professional photography", category: "photography", tags: ["photo", "portrait"] },
   { id: 9, src: "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&q=80", alt: "Champagne tower", category: "catering", tags: ["champagne", "celebration"] },
   { id: 10, src: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&q=80", alt: "Purple and gold theme", category: "themes", tags: ["purple", "gold", "royal"] },
   { id: 11, src: "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=600&q=80", alt: "Quinceañera tiara and crown", category: "jewelry", tags: ["tiara", "crown"] },
-  { id: 12, src: "https://images.unsplash.com/photo-1471479917193-f00955256257?w=600&q=80", alt: "Quinceañera invitation suite", category: "invitations", tags: ["invitations", "stationery"] },
+  { id: 12, src: "https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=600&q=80", alt: "Quinceañera invitation suite", category: "invitations", tags: ["invitations", "stationery"] },
 ];
 
 const FILTERS = [

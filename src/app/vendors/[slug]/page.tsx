@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .select("business_name, description, category, city")
     .eq(col, params.slug)
     .eq("status", "approved")
-    .single();
+    .maybeSingle();
 
   if (!vendor) return {};
 
@@ -50,13 +50,14 @@ export default async function VendorDetailPage({ params }: Props) {
   const supabase = await createClient();
   const col = UUID_RE.test(params.slug) ? "id" : "slug";
 
-  const { data: vendor } = await supabase
+  const { data: vendor, error } = await supabase
     .from("vendors")
     .select("*")
     .eq(col, params.slug)
     .eq("status", "approved")
-    .single();
+    .maybeSingle();
 
+  if (error) throw new Error(error.message);
   if (!vendor) notFound();
 
   const { data: reviews } = await supabase
