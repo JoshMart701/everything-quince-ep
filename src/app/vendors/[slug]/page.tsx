@@ -50,14 +50,13 @@ export default async function VendorDetailPage({ params }: Props) {
   const supabase = await createClient();
   const col = UUID_RE.test(params.slug) ? "id" : "slug";
 
-  const { data: vendor, error } = await supabase
+  const { data: vendor } = await supabase
     .from("vendors")
     .select("*")
     .eq(col, params.slug)
     .eq("status", "approved")
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
   if (!vendor) notFound();
 
   const { data: reviews } = await supabase
