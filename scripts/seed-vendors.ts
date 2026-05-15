@@ -284,7 +284,7 @@ const VENDORS = [
     business_name: "Danza Sol Choreography Studio",
     slug: "danza-sol-choreography-studio",
     category: "choreography",
-    logo_url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600&q=80",
+    logo_url: "https://images.unsplash.com/photo-1518834107812-67b0b7c58875?w=600&q=80",
     description:
       "Professional quinceañera choreography for waltz, surprise dance, and full court routines. Danza Sol's team of 4 certified instructors creates custom choreography that matches your music selection and theme. We offer flexible scheduling, group and private sessions, and can teach courts of 4–20 couples. Performance-ready in 8–12 sessions.",
     short_bio: "Waltz, surprise dance & court choreography — performance-ready in 8 sessions.",

@@ -16,8 +16,8 @@ const GALLERY_ITEMS = [
   { id: 8, src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80", alt: "Professional photography", category: "photography", tags: ["photo", "portrait"] },
   { id: 9, src: "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&q=80", alt: "Champagne tower", category: "catering", tags: ["champagne", "celebration"] },
   { id: 10, src: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&q=80", alt: "Purple and gold theme", category: "themes", tags: ["purple", "gold", "royal"] },
-  { id: 11, src: "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=600&q=80", alt: "Quinceañera tiara and crown", category: "jewelry", tags: ["tiara", "crown"] },
-  { id: 12, src: "https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=600&q=80", alt: "Quinceañera invitation suite", category: "invitations", tags: ["invitations", "stationery"] },
+  { id: 11, src: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80", alt: "Quinceañera tiara and crown jewelry", category: "jewelry", tags: ["tiara", "crown"] },
+  { id: 12, src: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&q=80", alt: "Quinceañera invitation suite and stationery", category: "invitations", tags: ["invitations", "stationery"] },
 ];
 
 const FILTERS = [

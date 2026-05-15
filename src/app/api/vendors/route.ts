@@ -18,13 +18,20 @@ export async function POST(req: NextRequest) {
 
     const slug = slugify(body.businessName) + "-" + Math.random().toString(36).slice(2, 6);
 
+    // Normalize category to slug so DB is always consistent
+    const catInput = body.category ?? "";
+    const catDef = VENDOR_CATEGORIES.find(
+      (c) => c.slug === catInput || c.label === catInput
+    );
+    const categorySlug = catDef?.slug ?? catInput;
+
     const { data, error } = await supabase
       .from("vendors")
       .insert({
         user_id: user.id,
         business_name: body.businessName,
         slug,
-        category: body.category,
+        category: categorySlug,
         description: body.description,
         phone: body.phone,
         email: body.email || user.email,
@@ -71,14 +78,18 @@ export async function GET(req: NextRequest) {
     .order("average_rating", { ascending: false });
 
   if (category) {
-    // Accept both slug ("venues") and label ("Venues & Halls") to handle any existing DB data
-    const catDef = VENDOR_CATEGORIES.find((c) => c.slug === category);
-    const catValues = catDef ? [catDef.slug, catDef.label] : [category];
-    query = query.in("category", catValues);
+    // Resolve to slug regardless of whether UI or DB stores slug/label
+    const catDef = VENDOR_CATEGORIES.find(
+      (c) => c.slug === category || c.label === category
+    );
+    const slug = catDef?.slug ?? category;
+    const label = catDef?.label ?? category;
+    query = query.in("category", [slug, label] as string[]);
   }
   if (city) {
-    // Match primary city column OR cities_served array (vendors often serve multiple cities)
-    query = query.or(`city.ilike.%${city}%,cities_served.cs.{"${city}"}`);
+    // Use simple ilike on primary city column — avoids PostgREST array-containment
+    // syntax issues that caused city filtering to silently return 0 results.
+    query = query.ilike("city", `%${city}%`);
   }
   if (plan) query = query.eq("plan", plan);
   if (search) {
