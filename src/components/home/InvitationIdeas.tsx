@@ -8,7 +8,7 @@ const INVITATION_STYLES = [
     description: "Pearl border, script fonts, romantic rose imagery",
     colors: ["#C4547A", "#FDF7F0", "#C9A84C"],
     price: "From $1.50/each",
-    img: "https://images.unsplash.com/photo-1529636562189-d99c5b33e5ef?w=400&q=80",
+    img: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&q=80",
   },
   {
     id: 2,

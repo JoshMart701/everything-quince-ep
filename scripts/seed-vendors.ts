@@ -68,6 +68,7 @@ const VENDORS = [
     business_name: "El Paso Grand Events Hall",
     slug: "el-paso-grand-events-hall",
     category: "venues",
+    logo_url: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80",
     description:
       "El Paso's premier quinceañera venue featuring three elegant ballrooms accommodating 50–500 guests. Our stunning décor packages, full-service catering partnerships, and dedicated event coordinators ensure your daughter's night is unforgettable. We offer complimentary venue tours every Saturday.",
     short_bio: "Three elegant ballrooms with full event coordination services.",
@@ -91,6 +92,7 @@ const VENDORS = [
     business_name: "Captured Moments Photography",
     slug: "captured-moments-photography",
     category: "photography",
+    logo_url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80",
     description:
       "Award-winning quinceañera photography and cinematic videography serving El Paso since 2015. We specialize in capturing the emotion and elegance of your quinceañera with a blend of classic portraiture and documentary storytelling. Our packages include drone footage, same-day edits, and stunning online galleries.",
     short_bio: "Cinematic photo & video packages with drone footage included.",
@@ -114,6 +116,7 @@ const VENDORS = [
     business_name: "Bella Quinceañera Boutique",
     slug: "bella-quinceanera-boutique",
     category: "dresses",
+    logo_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80",
     description:
       "The largest quinceañera dress boutique in El Paso with over 500 gowns in store. From classic ball gowns to modern mermaid silhouettes, our expert stylists help you find the perfect dress. We offer in-house alterations, rush services, and exclusive designer lines. Court dresses and chambelán suits also available.",
     short_bio: "500+ gowns in stock, in-house alterations, court & chambelán attire.",
@@ -137,6 +140,7 @@ const VENDORS = [
     business_name: "Sabor del Pueblo Catering",
     slug: "sabor-del-pueblo-catering",
     category: "catering",
+    logo_url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80",
     description:
       "Family-owned catering company bringing authentic Mexican and Tex-Mex flavors to your quinceañera since 1998. Our buffet and plated options serve 50–800 guests with chef-crafted menus including birria, mole enchiladas, and carving stations. We also create stunning custom quinceañera cakes and dessert tables.",
     short_bio: "Authentic Tex-Mex catering + custom cakes for 50–800 guests.",
@@ -160,6 +164,7 @@ const VENDORS = [
     business_name: "DJ Phantom Entertainment",
     slug: "dj-phantom-entertainment",
     category: "djs",
+    logo_url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600&q=80",
     description:
       "El Paso's #1 rated quinceañera DJ with over 400 events performed. DJ Phantom specializes in creating the perfect atmosphere — from the emotional waltz to the high-energy party. Services include professional sound & lighting, fog machine, LED dance floor, custom remixes, and bilingual MC hosting in English and Spanish.",
     short_bio: "400+ quinceañeras, bilingual MC, LED dance floor & custom lighting.",
@@ -183,6 +188,7 @@ const VENDORS = [
     business_name: "Desert Rose Florals & Decor",
     slug: "desert-rose-florals-decor",
     category: "florals",
+    logo_url: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=600&q=80",
     description:
       "Creating breathtaking floral installations and event décor for quinceañeras across the Borderland. Desert Rose specializes in lush floral arches, cascading centerpieces, balloon walls, and full venue transformations. We work with any theme — from enchanted garden to modern glam — and handle complete setup and teardown.",
     short_bio: "Full venue transformations: florals, arches, centerpieces & balloon walls.",
@@ -206,6 +212,7 @@ const VENDORS = [
     business_name: "Glamour Studio by Rosa",
     slug: "glamour-studio-by-rosa",
     category: "hair-makeup",
+    logo_url: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=600&q=80",
     description:
       "Award-winning beauty studio specializing in quinceañera hair and makeup for the birthday girl and her full court. Rosa and her team of 6 licensed stylists are available for both studio appointments and on-location services. We offer trials, airbrush makeup, updos, braids, and coordinated looks for the entire court.",
     short_bio: "Full court styling — airbrush makeup, updos & on-location services.",
@@ -229,6 +236,7 @@ const VENDORS = [
     business_name: "Designs by Lupita",
     slug: "designs-by-lupita",
     category: "invitations",
+    logo_url: "https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=600&q=80",
     description:
       "Custom quinceañera invitations, programs, and printed keepsakes designed with your exact vision. Lupita has been crafting unique quinceañera stationery since 2010. Every invitation suite includes custom design, envelope addressing, and rush printing options. We also create matching programs, table cards, and photo booth props.",
     short_bio: "Custom invitations, programs & keepsakes — rush printing available.",
@@ -252,6 +260,7 @@ const VENDORS = [
     business_name: "Sun City Limo & Party Bus",
     slug: "sun-city-limo-party-bus",
     category: "transportation",
+    logo_url: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&q=80",
     description:
       "Arrive in style with El Paso's premier quinceañera transportation company. Our fleet includes classic stretch limos, modern SUV limos, and 20–40 passenger party buses equipped with LED lighting, premium sound systems, and complimentary champagne for the birthday girl. Professional chauffeurs in formal attire.",
     short_bio: "Stretch limos & party buses with LED lighting and premium sound.",
@@ -275,6 +284,7 @@ const VENDORS = [
     business_name: "Danza Sol Choreography Studio",
     slug: "danza-sol-choreography-studio",
     category: "choreography",
+    logo_url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600&q=80",
     description:
       "Professional quinceañera choreography for waltz, surprise dance, and full court routines. Danza Sol's team of 4 certified instructors creates custom choreography that matches your music selection and theme. We offer flexible scheduling, group and private sessions, and can teach courts of 4–20 couples. Performance-ready in 8–12 sessions.",
     short_bio: "Waltz, surprise dance & court choreography — performance-ready in 8 sessions.",

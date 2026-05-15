@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
+import { VENDOR_CATEGORIES } from "@/lib/constants";
 
 export const dynamic = 'force-dynamic';
 
@@ -63,8 +64,16 @@ export async function GET(req: NextRequest) {
     .order("is_featured", { ascending: false })
     .order("average_rating", { ascending: false });
 
-  if (category) query = query.eq("category", category);
-  if (city) query = query.ilike("city", `%${city}%`);
+  if (category) {
+    // Accept both slug ("venues") and label ("Venues & Halls") to handle any existing DB data
+    const catDef = VENDOR_CATEGORIES.find((c) => c.slug === category);
+    const catValues = catDef ? [catDef.slug, catDef.label] : [category];
+    query = query.in("category", catValues);
+  }
+  if (city) {
+    // Match primary city column OR cities_served array (vendors often serve multiple cities)
+    query = query.or(`city.ilike.%${city}%,cities_served.cs.{"${city}"}`);
+  }
   if (plan) query = query.eq("plan", plan);
   if (search) {
     query = query.or(
