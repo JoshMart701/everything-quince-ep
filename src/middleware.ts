@@ -2,7 +2,6 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // Skip Supabase entirely if env vars are not configured (e.g. during build).
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next({ request });
   }
@@ -30,42 +29,41 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session without blocking
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
-  // Protect vendor dashboard routes
-  const vendorProtected = [
-    "/vendor/dashboard",
-    "/vendor/leads",
-    "/vendor/profile",
-    "/vendor/reviews",
-    "/vendor/analytics",
-    "/vendor/calendar",
-    "/vendor/clients",
-    "/vendor/invoices",
-  ];
+  const managerRoutes = ["/manager"];
+  const employeeRoutes = ["/employee"];
+  const authRoutes = ["/auth/login", "/auth/signup"];
 
-  if (vendorProtected.some(p => pathname.startsWith(p)) && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/vendor/login";
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  // Unauthenticated users can't access protected routes
+  if (!user) {
+    if (
+      managerRoutes.some((r) => pathname.startsWith(r)) ||
+      employeeRoutes.some((r) => pathname.startsWith(r)) ||
+      pathname.startsWith("/billing")
+    ) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/auth/login";
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return supabaseResponse;
   }
 
-  // Protect admin
-  if (pathname.startsWith("/admin") && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/vendor/login";
-    return NextResponse.redirect(loginUrl);
-  }
+  // Redirect authenticated users away from auth pages
+  if (authRoutes.some((r) => pathname === r)) {
+    // Look up role to redirect appropriately
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
 
-  // Redirect already-logged-in users away from login/signup
-  if ((pathname === "/vendor/login" || pathname === "/vendor/signup") && user) {
-    const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = "/vendor/dashboard";
-    return NextResponse.redirect(dashUrl);
+    const dest = request.nextUrl.clone();
+    dest.pathname = profile?.role === "manager" ? "/manager/dashboard" : "/employee/dashboard";
+    return NextResponse.redirect(dest);
   }
 
   return supabaseResponse;

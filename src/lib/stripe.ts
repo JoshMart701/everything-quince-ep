@@ -1,8 +1,15 @@
 import Stripe from "stripe";
 
+export const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder",
+  { apiVersion: "2026-04-22.dahlia" }
+);
+
 export function createStripeClient(): Stripe {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+  return stripe;
 }
+
+export const STANDPOINT_PRO_PRICE_ID = process.env.STRIPE_STANDPOINT_PRICE_ID ?? "";
 
 export const PLANS = {
   free: {

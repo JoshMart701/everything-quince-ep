@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createStripeClient } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
@@ -12,8 +12,6 @@ export async function POST(req: NextRequest) {
 
   const body = await req.text();
   const signature = req.headers.get("stripe-signature")!;
-
-  const stripe = createStripeClient();
 
   let event: Stripe.Event;
   try {
@@ -29,7 +27,19 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { vendor_id, plan } = session.metadata ?? {};
+        const { vendor_id, plan, org_id } = session.metadata ?? {};
+
+        // Standpoint org upgrade
+        if (org_id) {
+          const subscriptionId = session.subscription as string;
+          await supabase.from("organizations").update({
+            plan: "pro",
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: subscriptionId,
+            updated_at: new Date().toISOString(),
+          }).eq("id", org_id);
+          break;
+        }
 
         if (!vendor_id || !plan) break;
 

@@ -1,182 +1,151 @@
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import HeroSection from "@/components/home/HeroSection";
-import BudgetCalculator from "@/components/home/BudgetCalculator";
-import PlanningChecklist from "@/components/home/PlanningChecklist";
-import PriceGuide from "@/components/home/PriceGuide";
-import InspirationGallery from "@/components/home/InspirationGallery";
-import InvitationIdeas from "@/components/home/InvitationIdeas";
-import VendorDirectory from "@/components/home/VendorDirectory";
-import QuoteForm from "@/components/home/QuoteForm";
-import { VENDOR_CATEGORIES, CITIES } from "@/lib/constants";
 import Link from "next/link";
+import { BarChart3, Star, Users, Sparkles, ClipboardList, ChevronRight } from "lucide-react";
 
-function CategorySection() {
+const features = [
+  {
+    icon: ClipboardList,
+    title: "5-Category Reviews",
+    desc: "Rate communication, productivity, teamwork, leadership, and technical skills — each with notes.",
+  },
+  {
+    icon: Users,
+    title: "Two-Role Access",
+    desc: "Managers submit and own reviews. Employees get a private, read-only view of their scores.",
+  },
+  {
+    icon: Sparkles,
+    title: "AI Coaching (Pro)",
+    desc: "Claude generates personalized strengths, growth areas, and a 90-day action plan per review.",
+  },
+  {
+    icon: Star,
+    title: "Trend Visibility",
+    desc: "See how performance evolves over time with per-category breakdowns and average ratings.",
+  },
+];
+
+export default function LandingPage() {
   return (
-    <section className="py-20 bg-[#3D1A2E]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="w-16 h-1 bg-[#C9A84C] rounded-full mx-auto mb-4" />
-          <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-            Browse by Category
+    <div className="min-h-screen bg-white">
+      {/* Nav */}
+      <header className="border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-bold text-gray-900">
+            <BarChart3 className="w-5 h-5 text-indigo-600" />
+            <span className="text-indigo-600">Standpoint</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              Sign in
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="text-sm font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Get started
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="max-w-4xl mx-auto px-4 pt-20 pb-24 text-center">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 mb-6">
+          <Sparkles className="w-3 h-3" />
+          Powered by Claude AI
+        </div>
+        <h1 className="text-5xl font-bold text-gray-900 leading-tight mb-5">
+          Performance reviews that
+          <br />
+          <span className="text-indigo-600">actually help people grow</span>
+        </h1>
+        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
+          Managers submit structured reviews across 5 categories. Employees get a clear dashboard
+          with their scores and AI-generated coaching summaries.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+          >
+            Start for free <ChevronRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center gap-2 text-gray-600 font-medium text-sm hover:text-gray-900"
+          >
+            Already have an account? Sign in
+          </Link>
+        </div>
+        <p className="mt-4 text-xs text-gray-400">
+          Free plan available · No credit card required
+        </p>
+      </section>
+
+      {/* Features */}
+      <section className="bg-gray-50 py-20">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">
+            Everything you need for meaningful performance reviews
           </h2>
-          <p className="text-white/70 mt-3 text-lg">
-            Everything you need for a perfect quinceañera, all in one place.
-          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div key={f.title} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <div className="p-2 bg-indigo-50 rounded-lg w-fit mb-4">
+                    <Icon className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">{f.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
+      </section>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {VENDOR_CATEGORIES.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/categories/${cat.slug}`}
-              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#C9A84C]/40 rounded-2xl p-6 text-center transition-all duration-300 hover:-translate-y-1"
-            >
-              <span className="text-4xl block mb-3">{cat.icon}</span>
-              <h3 className="font-heading font-semibold text-white text-sm md:text-base mb-1">
-                {cat.label}
-              </h3>
-              <p className="text-white/50 text-xs font-body hidden md:block">{cat.description}</p>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CitiesSection() {
-  return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="gold-divider mx-auto mb-4" />
-          <h2 className="section-title">We Serve Your Community</h2>
-          <p className="section-subtitle">
-            Connecting families with trusted vendors across the Borderland.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {CITIES.map((city) => (
-            <Link
-              key={city.slug}
-              href={`/cities/${city.slug}`}
-              className="card p-6 text-center hover:shadow-[0_8px_32px_rgba(196,84,122,0.15)] transition-all duration-300 hover:-translate-y-1 group"
-            >
-              <div className="w-14 h-14 bg-gradient-to-br from-[#C4547A]/20 to-[#C9A84C]/20 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">📍</span>
+      {/* How it works */}
+      <section className="py-20 max-w-4xl mx-auto px-4">
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">How it works</h2>
+        <div className="grid md:grid-cols-3 gap-8 text-center">
+          {[
+            { step: "1", title: "Manager signs up", desc: "Create your organization and invite your team with a shareable link." },
+            { step: "2", title: "Submit a review", desc: "Rate each employee across 5 categories, add notes, and click submit." },
+            { step: "3", title: "Employees see results", desc: "Employees get a private dashboard with scores and an AI coaching summary." },
+          ].map((s) => (
+            <div key={s.step}>
+              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center mx-auto mb-4 text-lg">
+                {s.step}
               </div>
-              <h3 className="font-heading font-bold text-[#3D1A2E] text-xl mb-1">{city.name}</h3>
-              <p className="text-sm text-[#C4547A] font-body font-medium mb-2">{city.state}</p>
-              <p className="text-xs text-[#3D1A2E]/60 font-body">{city.description}</p>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TestimonialsSection() {
-  const testimonials = [
-    {
-      name: "Maria & Ricardo L.",
-      quote: "Everything Quince EP made planning Sofia's quinceañera so easy! We found our photographer, DJ, and florist all in one place. The budget calculator was a lifesaver.",
-      rating: 5,
-      city: "El Paso, TX",
-    },
-    {
-      name: "Ana Hernandez",
-      quote: "As a quinceañera photographer, listing on this platform tripled my bookings. The Pro plan is worth every penny. I get qualified leads every week!",
-      rating: 5,
-      city: "El Paso Vendor",
-    },
-    {
-      name: "Sandra & Jorge M.",
-      quote: "The planning checklist kept us organized through the entire 18-month planning process. We didn't miss a single detail for Isabella's special day.",
-      rating: 5,
-      city: "Horizon City, TX",
-    },
-  ];
-
-  return (
-    <section className="py-20 bg-[#FDF7F0]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="gold-divider mx-auto mb-4" />
-          <h2 className="section-title">What Families Are Saying</h2>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((t, i) => (
-            <div key={i} className="card p-7">
-              <div className="flex gap-0.5 mb-4">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <span key={j} className="text-[#C9A84C] text-lg">★</span>
-                ))}
-              </div>
-              <p className="font-body text-[#3D1A2E]/80 leading-relaxed mb-6 italic">
-                &ldquo;{t.quote}&rdquo;
-              </p>
-              <div>
-                <p className="font-heading font-semibold text-[#3D1A2E]">{t.name}</p>
-                <p className="text-sm text-[#C4547A] font-body">{t.city}</p>
-              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">{s.title}</h3>
+              <p className="text-sm text-gray-500">{s.desc}</p>
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-function VendorCTABanner() {
-  return (
-    <section className="py-16 bg-gradient-to-r from-[#3D1A2E] to-[#5c2044]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-white mb-4">
-          Are You a Quinceañera Vendor?
-        </h2>
-        <p className="text-white/70 font-body text-lg mb-8 max-w-2xl mx-auto">
-          Join hundreds of El Paso vendors growing their business through Everything Quince EP.
-          Start free — upgrade anytime for leads and full profile access.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/vendor/signup" className="btn-secondary">
-            List Your Business Free
-          </Link>
-          <Link href="/vendor/upgrade" className="btn-outline-white">
-            See Pro &amp; Premium Plans
+      {/* CTA */}
+      <section className="bg-indigo-600 py-16">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to give your team a clearer standpoint?
+          </h2>
+          <p className="text-indigo-200 mb-8">
+            Start free. Upgrade to Pro for AI-powered coaching summaries.
+          </p>
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center gap-2 bg-white text-indigo-700 font-semibold px-6 py-3 rounded-lg hover:bg-indigo-50 transition-colors text-sm"
+          >
+            Create your free account <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
-        <p className="text-white/40 text-sm font-body mt-4">
-          No credit card required for free listing • Upgrade anytime
-        </p>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-export default function HomePage() {
-  return (
-    <>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <CategorySection />
-        <VendorDirectory />
-        <BudgetCalculator />
-        <PlanningChecklist />
-        <PriceGuide />
-        <InspirationGallery />
-        <InvitationIdeas />
-        <TestimonialsSection />
-        <CitiesSection />
-        <QuoteForm />
-        <VendorCTABanner />
-      </main>
-      <Footer />
-    </>
+      <footer className="py-8 text-center text-sm text-gray-400">
+        © {new Date().getFullYear()} Standpoint · Built with Next.js, Supabase, Stripe & Claude
+      </footer>
+    </div>
   );
 }
