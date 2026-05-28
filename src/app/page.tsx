@@ -1,7 +1,7 @@
 import { Instrument_Serif } from "next/font/google";
 import Link from "next/link";
 import { BarChart3, Sparkles, ClipboardList, TrendingUp, Shield, ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
-import { AutoplayDemo } from "@/components/standpoint/AutoplayDemo";
+import { HeroDemo } from "@/components/standpoint/HeroDemo";
 import { ScrollDemo } from "@/components/standpoint/ScrollDemo";
 import { PricingToggle } from "@/components/standpoint/PricingToggle";
 
@@ -139,42 +139,39 @@ export default function LandingPage() {
       </header>
 
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 pt-20 pb-16 md:pt-28 md:pb-24">
-        <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#4f46e5] bg-[#4f46e5]/8 border border-[#4f46e5]/20 rounded-full px-3 py-1 mb-6">
-              <Sparkles className="w-3 h-3" />
-              Powered by Claude AI
-            </div>
-            <h1 className={`${serif.className} text-5xl md:text-6xl text-gray-900 leading-[1.1] mb-5`}>
-              Performance reviews that{" "}
-              <span className="text-[#4f46e5]">actually help people grow.</span>
-            </h1>
-            <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-md">
-              Managers submit structured reviews in 5 minutes. Employees get a clear dashboard and an AI-generated coaching plan — personalized by Claude.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center justify-center gap-2 bg-[#4f46e5] text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-[#4338ca] transition-colors text-sm"
-              >
-                Start for free <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/auth/login"
-                className="inline-flex items-center justify-center gap-2 text-gray-600 bg-gray-50 border border-gray-200 font-medium px-6 py-3.5 rounded-xl hover:bg-gray-100 transition-colors text-sm"
-              >
-                Sign in to your account
-              </Link>
-            </div>
-            <p className="mt-4 text-xs text-gray-400">
-              Free plan available · No credit card required · Setup in 5 minutes
-            </p>
+      <section className="max-w-6xl mx-auto px-4 pt-20 pb-6 md:pt-28 md:pb-8">
+        <div className="text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#4f46e5] bg-[#4f46e5]/8 border border-[#4f46e5]/20 rounded-full px-3 py-1 mb-6">
+            <Sparkles className="w-3 h-3" />
+            Powered by Claude AI
           </div>
-
-          <div>
-            <AutoplayDemo />
+          <h1 className={`${serif.className} text-5xl md:text-6xl text-gray-900 leading-[1.1] mb-5`}>
+            Performance reviews that{" "}
+            <span className="text-[#4f46e5]">actually help people grow.</span>
+          </h1>
+          <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-xl mx-auto">
+            Managers submit structured reviews in 5 minutes. Employees get a clear dashboard and an AI-generated coaching plan — personalized by Claude.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/auth/signup"
+              className="inline-flex items-center justify-center gap-2 bg-[#4f46e5] text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-[#4338ca] transition-colors text-sm"
+            >
+              Start for free <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center justify-center gap-2 text-gray-600 bg-gray-50 border border-gray-200 font-medium px-6 py-3.5 rounded-xl hover:bg-gray-100 transition-colors text-sm"
+            >
+              Sign in to your account
+            </Link>
           </div>
+          <p className="mt-4 text-xs text-gray-400">
+            Free plan available · No credit card required · Setup in 5 minutes
+          </p>
+        </div>
+        <div className="rounded-2xl overflow-hidden shadow-2xl border border-indigo-100 max-w-4xl mx-auto mt-14">
+          <HeroDemo />
         </div>
       </section>
 
