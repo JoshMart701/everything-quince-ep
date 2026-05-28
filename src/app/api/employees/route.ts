@@ -6,14 +6,12 @@ export async function GET() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, org_id")
-      .eq("id", user.id)
+      .select("role, business_id")
+      .eq("user_id", user.id)
       .single();
 
     if (profile?.role !== "manager") {
@@ -22,8 +20,8 @@ export async function GET() {
 
     const { data: employees } = await supabase
       .from("profiles")
-      .select("*")
-      .eq("org_id", profile.org_id)
+      .select("id, user_id, full_name, email, avatar_initials, created_at")
+      .eq("business_id", profile.business_id)
       .eq("role", "employee")
       .order("full_name");
 

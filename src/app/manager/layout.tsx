@@ -6,25 +6,21 @@ export default async function ManagerLayout({ children }: { children: React.Reac
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+  if (!user) redirect("/auth/login");
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*, organizations(name, plan)")
-    .eq("id", user.id)
+    .select("*, businesses(name, plan, join_code)")
+    .eq("user_id", user.id)
     .single();
 
-  if (!profile || profile.role !== "manager") {
-    redirect("/employee/dashboard");
-  }
+  if (!profile || profile.role !== "manager") redirect("/employee/dashboard");
 
-  const org = profile.organizations as { name: string; plan: string } | null;
+  const biz = profile.businesses as unknown as { name: string; plan: string; join_code: string } | null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar profile={profile} orgName={org?.name ?? "Your Org"} />
+      <Navbar profile={profile} businessName={biz?.name ?? "Your Team"} />
       <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
     </div>
   );

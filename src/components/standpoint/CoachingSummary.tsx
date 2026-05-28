@@ -7,21 +7,14 @@ import { cn } from "@/lib/utils";
 interface CoachingSummaryProps {
   reviewId: string;
   summary: string | null;
-  generatedAt: string | null;
   isPro: boolean;
   isManager?: boolean;
 }
 
-export function CoachingSummary({
-  reviewId,
-  summary,
-  generatedAt,
-  isPro,
-  isManager = false,
-}: CoachingSummaryProps) {
+export function CoachingSummary({ reviewId, summary, isPro, isManager = false }: CoachingSummaryProps) {
   const [currentSummary, setCurrentSummary] = useState(summary);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -34,10 +27,10 @@ export function CoachingSummary({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Failed to generate summary");
+        throw new Error(data.error ?? "Failed to generate");
       }
       const data = await res.json();
-      setCurrentSummary(data.coaching_summary);
+      setCurrentSummary(data.ai_summary);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -49,16 +42,13 @@ export function CoachingSummary({
     return (
       <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-indigo-500" />
-          <h3 className="font-semibold text-indigo-800">AI Coaching Summary</h3>
+          <Sparkles className="w-4 h-4 text-[#4f46e5]" />
+          <h3 className="font-semibold text-[#4f46e5] text-sm">AI Coaching Summary</h3>
         </div>
         <p className="text-sm text-indigo-700">
-          Upgrade to Pro to unlock personalized AI-generated coaching summaries powered by Claude.
+          Upgrade to Pro for Claude-powered coaching summaries tailored to each employee.
         </p>
-        <a
-          href="/billing"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800"
-        >
+        <a href="/billing" className="mt-2 inline-flex text-sm font-medium text-[#4f46e5] hover:underline">
           Upgrade to Pro →
         </a>
       </div>
@@ -69,8 +59,8 @@ export function CoachingSummary({
     <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-500" />
-          <h3 className="font-semibold text-indigo-800">AI Coaching Summary</h3>
+          <Sparkles className="w-4 h-4 text-[#4f46e5]" />
+          <h3 className="font-semibold text-[#4f46e5] text-sm">AI Coaching Summary</h3>
         </div>
         {isManager && (
           <button
@@ -96,16 +86,10 @@ export function CoachingSummary({
           {currentSummary}
         </div>
       ) : (
-        <p className="text-sm text-indigo-600/80 italic">
+        <p className="text-sm text-indigo-500 italic">
           {isManager
-            ? 'Click "Generate" to create an AI-powered coaching summary for this employee.'
-            : "Your manager hasn't generated a coaching summary yet."}
-        </p>
-      )}
-
-      {generatedAt && (
-        <p className="mt-3 text-xs text-indigo-400">
-          Generated {new Date(generatedAt).toLocaleDateString()}
+            ? 'Click "Generate" to create an AI coaching summary for this employee.'
+            : "Your manager hasn&apos;t generated a coaching summary yet."}
         </p>
       )}
     </div>

@@ -30,14 +30,12 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
   const { pathname } = request.nextUrl;
 
+  const authRoutes = ["/auth/login", "/auth/signup"];
   const managerRoutes = ["/manager"];
   const employeeRoutes = ["/employee"];
-  const authRoutes = ["/auth/login", "/auth/signup"];
 
-  // Unauthenticated users can't access protected routes
   if (!user) {
     if (
       managerRoutes.some((r) => pathname.startsWith(r)) ||
@@ -52,13 +50,12 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect logged-in users away from auth pages
   if (authRoutes.some((r) => pathname === r)) {
-    // Look up role to redirect appropriately
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("user_id", user.id)
       .single();
 
     const dest = request.nextUrl.clone();
@@ -71,6 +68,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2)$).*)",
   ],
 };

@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Users, Star, ClipboardList, TrendingUp, ChevronRight } from "lucide-react";
-import { REVIEW_CATEGORIES } from "@/lib/types";
-import type { PerformanceReview } from "@/lib/types";
+import type { Review } from "@/lib/types";
 
 export default async function ManagerDashboard() {
   const supabase = await createClient();
@@ -10,47 +9,48 @@ export default async function ManagerDashboard() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("org_id, full_name")
-    .eq("id", user!.id)
+    .select("id, business_id, full_name")
+    .eq("user_id", user!.id)
     .single();
 
-  const [
-    { data: employees },
-    { data: reviews },
-    { data: org },
-  ] = await Promise.all([
+  const [{ data: employees }, { data: reviews }, { data: business }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, email, title")
-      .eq("org_id", profile!.org_id)
+      .select("id, full_name, avatar_initials, email")
+      .eq("business_id", profile!.business_id)
       .eq("role", "employee"),
     supabase
-      .from("performance_reviews")
-      .select("*, review_scores(*), employee:profiles!employee_id(full_name)")
-      .eq("org_id", profile!.org_id)
+      .from("reviews")
+      .select("*, review_categories(*), employee:profiles!employee_id(full_name, avatar_initials)")
+      .eq("business_id", profile!.business_id)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
-      .from("organizations")
+      .from("businesses")
       .select("name, plan")
-      .eq("id", profile!.org_id)
+      .eq("id", profile!.business_id)
       .single(),
   ]);
 
-  const totalReviews = reviews?.length ?? 0;
+  const totalReviews  = reviews?.length ?? 0;
   const employeeCount = employees?.length ?? 0;
 
-  // Compute average scores per category across all reviews
-  const categoryAverages = REVIEW_CATEGORIES.map((cat) => {
-    const allScores = (reviews as PerformanceReview[] ?? [])
-      .flatMap((r) => r.review_scores ?? [])
-      .filter((s) => s.category === cat.key);
-    const avg =
-      allScores.length > 0
-        ? allScores.reduce((sum, s) => sum + s.rating, 0) / allScores.length
-        : null;
-    return { ...cat, avg };
+  const allCategoryScores = (reviews as Review[] ?? []).flatMap((r) => r.review_categories ?? []);
+  const globalAvg =
+    allCategoryScores.length > 0
+      ? allCategoryScores.reduce((s, c) => s + c.star_rating, 0) / allCategoryScores.length
+      : null;
+
+  // Per-category averages across all reviews
+  const catMap: Record<string, number[]> = {};
+  allCategoryScores.forEach((c) => {
+    if (!catMap[c.category_name]) catMap[c.category_name] = [];
+    catMap[c.category_name].push(c.star_rating);
   });
+  const catAverages = Object.entries(catMap).map(([name, vals]) => ({
+    name,
+    avg: vals.reduce((a, b) => a + b, 0) / vals.length,
+  })).sort((a, b) => b.avg - a.avg);
 
   return (
     <div className="space-y-8">
@@ -58,98 +58,67 @@ export default async function ManagerDashboard() {
         <h1 className="text-2xl font-bold text-gray-900">
           Welcome back, {profile?.full_name?.split(" ")[0]}
         </h1>
-        <p className="text-gray-500 text-sm mt-1">{org?.name} · Manager Overview</p>
+        <p className="text-gray-500 text-sm mt-1">{business?.name} · Manager Overview</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-lg">
-              <Users className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{employeeCount}</p>
-              <p className="text-xs text-gray-500">Employees</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <ClipboardList className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{totalReviews}</p>
-              <p className="text-xs text-gray-500">Reviews</p>
+        {[
+          { icon: Users,       value: employeeCount,                           label: "Employees",  color: "bg-indigo-50 text-[#4f46e5]" },
+          { icon: ClipboardList, value: totalReviews,                          label: "Reviews",    color: "bg-emerald-50 text-emerald-600" },
+          { icon: Star,        value: globalAvg !== null ? globalAvg.toFixed(1) : "—", label: "Avg Rating", color: "bg-amber-50 text-amber-500" },
+        ].map(({ icon: Icon, value, label, color }) => (
+          <div key={label} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm col-span-1">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${color.split(" ")[0]}`}>
+                <Icon className={`w-5 h-5 ${color.split(" ")[1]}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{value}</p>
+                <p className="text-xs text-gray-500">{label}</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm col-span-2 sm:col-span-1">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <Star className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalReviews > 0
-                  ? (
-                      (reviews as PerformanceReview[])
-                        .flatMap((r) => r.review_scores ?? [])
-                        .reduce((sum, s) => sum + s.rating, 0) /
-                      ((reviews as PerformanceReview[]).flatMap((r) => r.review_scores ?? []).length || 1)
-                    ).toFixed(1)
-                  : "—"}
-              </p>
-              <p className="text-xs text-gray-500">Avg Rating</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick actions */}
       <div className="flex flex-wrap gap-3">
         <Link
           href="/manager/reviews/new"
-          className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center gap-2 bg-[#4f46e5] text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-[#4338ca] transition-colors"
         >
-          <ClipboardList className="w-4 h-4" />
-          New Review
+          <ClipboardList className="w-4 h-4" /> New Review
         </Link>
         <Link
           href="/manager/employees"
           className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
         >
-          <Users className="w-4 h-4" />
-          Manage Employees
+          <Users className="w-4 h-4" /> Manage Team
         </Link>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Category Performance */}
+        {/* Category performance */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-indigo-500" />
+            <TrendingUp className="w-5 h-5 text-[#4f46e5]" />
             <h2 className="font-semibold text-gray-900">Team Performance</h2>
           </div>
-          {totalReviews === 0 ? (
+          {catAverages.length === 0 ? (
             <p className="text-sm text-gray-400 italic">No reviews yet.</p>
           ) : (
             <div className="space-y-3">
-              {categoryAverages.map((cat) => (
-                <div key={cat.key}>
+              {catAverages.map((cat) => (
+                <div key={cat.name}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{cat.label}</span>
-                    <span className="font-medium text-gray-900">
-                      {cat.avg !== null ? `${cat.avg.toFixed(1)}/5` : "—"}
-                    </span>
+                    <span className="text-gray-600">{cat.name}</span>
+                    <span className="font-medium text-gray-900">{cat.avg.toFixed(1)}/5</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div
-                      className="bg-indigo-500 h-2 rounded-full"
-                      style={{ width: cat.avg !== null ? `${(cat.avg / 5) * 100}%` : "0%" }}
+                      className="bg-[#4f46e5] h-2 rounded-full"
+                      style={{ width: `${(cat.avg / 5) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -158,42 +127,35 @@ export default async function ManagerDashboard() {
           )}
         </div>
 
-        {/* Recent Reviews */}
+        {/* Recent reviews */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900">Recent Reviews</h2>
-            <Link
-              href="/manager/employees"
-              className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
-            >
+            <Link href="/manager/employees" className="text-xs text-[#4f46e5] hover:underline flex items-center gap-1">
               View all <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
-          {!reviews || reviews.length === 0 ? (
+          {totalReviews === 0 ? (
             <p className="text-sm text-gray-400 italic">No reviews submitted yet.</p>
           ) : (
             <div className="space-y-3">
-              {(reviews as PerformanceReview[]).map((review) => {
-                const avgRating =
-                  review.review_scores && review.review_scores.length > 0
-                    ? review.review_scores.reduce((s, r) => s + r.rating, 0) /
-                      review.review_scores.length
-                    : 0;
-                const employeeName =
-                  (review.employee as { full_name: string } | null)?.full_name ?? "Unknown";
+              {(reviews as Review[]).map((r) => {
+                const emp = r.employee as { full_name: string; avatar_initials: string } | null;
                 return (
-                  <div
-                    key={review.id}
-                    className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{employeeName}</p>
-                      <p className="text-xs text-gray-500">{review.period}</p>
+                  <div key={r.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#4f46e5]/10 flex items-center justify-center text-[#4f46e5] text-xs font-bold">
+                        {emp?.avatar_initials ?? "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{emp?.full_name ?? "Unknown"}</p>
+                        <p className="text-xs text-gray-500">{r.period}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       <span className="text-sm font-semibold text-gray-900">
-                        {avgRating.toFixed(1)}
+                        {r.overall_score?.toFixed(1) ?? "—"}
                       </span>
                     </div>
                   </div>
@@ -204,16 +166,16 @@ export default async function ManagerDashboard() {
         </div>
       </div>
 
-      {/* Pro upsell if on free plan */}
-      {org?.plan === "free" && (
-        <div className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+      {/* Pro upsell */}
+      {business?.plan === "free" && (
+        <div className="rounded-xl bg-[#4f46e5] p-6 text-white">
           <h3 className="font-bold text-lg mb-1">Unlock AI Coaching Summaries</h3>
-          <p className="text-indigo-100 text-sm mb-4">
-            Upgrade to Pro and get Claude-powered coaching summaries for every employee review.
+          <p className="text-indigo-200 text-sm mb-4">
+            Upgrade to Pro and get Claude-powered coaching summaries for every review — personalized for each employee.
           </p>
           <Link
             href="/billing"
-            className="inline-flex items-center gap-1 bg-white text-indigo-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
+            className="inline-flex items-center gap-1 bg-white text-[#4f46e5] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
           >
             Upgrade to Pro →
           </Link>

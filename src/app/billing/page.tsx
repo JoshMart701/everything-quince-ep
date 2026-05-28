@@ -11,21 +11,21 @@ export default async function BillingPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*, organizations(name, plan, stripe_customer_id)")
-    .eq("id", user.id)
+    .select("*, businesses(name, plan, stripe_customer_id)")
+    .eq("user_id", user.id)
     .single();
 
-  if (profile?.role !== "manager") redirect("/employee/dashboard");
+  if (!profile || profile.role !== "manager") redirect("/employee/dashboard");
 
-  const org = profile.organizations as { name: string; plan: string; stripe_customer_id: string | null } | null;
+  const biz = profile.businesses as unknown as { name: string; plan: string; stripe_customer_id: string | null } | null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar profile={profile} orgName={org?.name ?? "Your Org"} />
+      <Navbar profile={profile} businessName={biz?.name ?? "Your Team"} />
       <main className="max-w-3xl mx-auto px-4 py-8">
         <BillingClient
-          currentPlan={org?.plan ?? "free"}
-          hasStripeCustomer={!!org?.stripe_customer_id}
+          currentPlan={biz?.plan ?? "free"}
+          hasStripeCustomer={!!biz?.stripe_customer_id}
         />
       </main>
     </div>

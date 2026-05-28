@@ -1,41 +1,41 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { ReviewScore } from './types';
-import { REVIEW_CATEGORIES } from './types';
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+interface ScoreInput {
+  category: string;
+  rating: number;
+  notes?: string | null;
+}
 
 export async function generateCoachingSummary(
   employeeName: string,
   period: string,
-  scores: ReviewScore[],
+  scores: ScoreInput[],
   overallNotes: string | null
 ): Promise<string> {
   const scoreLines = scores.map((s) => {
-    const cat = REVIEW_CATEGORIES.find((c) => c.key === s.category);
-    const label = cat?.label ?? s.category;
     const stars = '★'.repeat(s.rating) + '☆'.repeat(5 - s.rating);
-    return `- ${label}: ${stars} (${s.rating}/5)${s.notes ? ` — "${s.notes}"` : ''}`;
+    return `- ${s.category}: ${stars} (${s.rating}/5)${s.notes ? ` — "${s.notes}"` : ''}`;
   });
 
-  const averageRating =
+  const avgRating =
     scores.length > 0
       ? (scores.reduce((sum, s) => sum + s.rating, 0) / scores.length).toFixed(1)
       : 'N/A';
 
-  const prompt = `You are an expert performance coach. Based on the performance review data below, write a personalized, constructive coaching summary for ${employeeName} covering their ${period} review period.
+  const prompt = `You are an expert performance coach. Write a personalized, constructive coaching summary for ${employeeName} based on their ${period} review.
 
-Performance Scores (average: ${averageRating}/5):
+Performance scores (average: ${avgRating}/5):
 ${scoreLines.join('\n')}
-${overallNotes ? `\nManager Notes: "${overallNotes}"` : ''}
+${overallNotes ? `\nManager notes: "${overallNotes}"` : ''}
 
-Write a coaching summary with these sections:
-1. **Strengths** (2-3 specific strengths based on top scores)
-2. **Growth Areas** (2-3 actionable improvement areas for lower scores)
-3. **Action Plan** (3 concrete steps the employee can take in the next quarter)
+Structure your response with these three sections:
+**Strengths** — 2-3 specific strengths based on top-rated categories
+**Growth Areas** — 2-3 actionable improvement areas for lower-rated categories
+**Action Plan** — 3 concrete steps for the next quarter
 
-Keep the tone warm, encouraging, and specific. Use 250-350 words total. Address the employee directly as "you".`;
+Tone: warm, encouraging, specific. Address the employee as "you". 250–350 words total.`;
 
   const message = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -44,9 +44,6 @@ Keep the tone warm, encouraging, and specific. Use 250-350 words total. Address 
   });
 
   const content = message.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Anthropic');
-  }
-
+  if (content.type !== 'text') throw new Error('Unexpected Anthropic response type');
   return content.text;
 }

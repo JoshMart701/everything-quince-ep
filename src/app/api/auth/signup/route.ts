@@ -1,19 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { computeInitials, generateJoinCode } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
-    const { fullName, orgName, email, password } = await request.json();
+    const { role, fullName, email, password, businessName, joinCode } =
+      await request.json();
 
-    if (!fullName || !orgName || !email || !password) {
+    if (!role || !fullName || !email || !password) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
-
     if (password.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
     }
+    if (role === "manager" && !businessName) {
+      return NextResponse.json({ error: "Business name is required" }, { status: 400 });
+    }
+    if (role === "employee" && !joinCode) {
+      return NextResponse.json({ error: "Join code is required" }, { status: 400 });
+    }
 
     const supabase = await createServiceClient();
+
+    // For employees: validate join code first
+    let businessId: string | null = null;
+    if (role === "employee") {
+      const { data: business } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("join_code", joinCode.toUpperCase().trim())
+        .single();
+
+      if (!business) {
+        return NextResponse.json(
+          { error: "Invalid join code. Ask your manager to double-check it." },
+          { status: 404 }
+        );
+      }
+      businessId = business.id;
+    }
 
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -23,45 +48,72 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      return NextResponse.json({ error: authError?.message ?? "Failed to create user" }, { status: 400 });
+      return NextResponse.json(
+        { error: authError?.message ?? "Failed to create account" },
+        { status: 400 }
+      );
     }
 
     const userId = authData.user.id;
+    const avatarInitials = computeInitials(fullName);
 
-    // Create organization
-    const { data: org, error: orgError } = await supabase
-      .from("organizations")
-      .insert({ name: orgName, owner_id: userId })
-      .select()
-      .single();
+    if (role === "manager") {
+      // Create business with unique join code
+      let code = generateJoinCode();
+      // Ensure uniqueness (retry once)
+      const { data: existing } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("join_code", code)
+        .single();
+      if (existing) code = generateJoinCode();
 
-    if (orgError || !org) {
-      // Rollback user
-      await supabase.auth.admin.deleteUser(userId);
-      return NextResponse.json({ error: orgError?.message ?? "Failed to create organization" }, { status: 500 });
-    }
+      const { data: business, error: bizError } = await supabase
+        .from("businesses")
+        .insert({ name: businessName.trim(), owner_id: userId, join_code: code })
+        .select()
+        .single();
 
-    // Create profile
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: userId,
-        org_id: org.id,
-        full_name: fullName,
+      if (bizError || !business) {
+        await supabase.auth.admin.deleteUser(userId);
+        return NextResponse.json(
+          { error: bizError?.message ?? "Failed to create business" },
+          { status: 500 }
+        );
+      }
+
+      const { error: profileError } = await supabase.from("profiles").insert({
+        user_id:         userId,
+        business_id:     business.id,
+        full_name:       fullName.trim(),
         email,
-        role: "manager",
+        role:            "manager",
+        avatar_initials: avatarInitials,
       });
 
-    if (profileError) {
-      await supabase.auth.admin.deleteUser(userId);
-      return NextResponse.json({ error: profileError.message }, { status: 500 });
+      if (profileError) {
+        await supabase.auth.admin.deleteUser(userId);
+        return NextResponse.json({ error: profileError.message }, { status: 500 });
+      }
+    } else {
+      // Employee: join existing business
+      const { error: profileError } = await supabase.from("profiles").insert({
+        user_id:         userId,
+        business_id:     businessId!,
+        full_name:       fullName.trim(),
+        email,
+        role:            "employee",
+        avatar_initials: avatarInitials,
+      });
+
+      if (profileError) {
+        await supabase.auth.admin.deleteUser(userId);
+        return NextResponse.json({ error: profileError.message }, { status: 500 });
+      }
     }
 
-    // Sign in the user to establish a session
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) {
-      return NextResponse.json({ error: "Account created but sign-in failed. Please log in." }, { status: 500 });
-    }
+    // Sign in to create a session
+    await supabase.auth.signInWithPassword({ email, password });
 
     return NextResponse.json({ success: true });
   } catch {

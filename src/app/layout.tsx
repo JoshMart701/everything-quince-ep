@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+const geist = localFont({
+  src: [{ path: "./fonts/GeistVF.woff", weight: "100 900", style: "normal" }],
+  variable: "--font-geist",
   display: "swap",
 });
 
@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={geist.variable}>
       <body className="font-sans antialiased bg-white text-gray-900">
         {children}
         <Toaster position="top-right" richColors />

@@ -10,21 +10,22 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 243 75% 59%;
+    --primary: 245 68% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 245 50% 96%;
+    --secondary-foreground: 245 68% 30%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 245 50% 96%;
+    --accent-foreground: 245 68% 30%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 243 75% 59%;
+    --ring: 245 68% 58%;
     --radius: 0.5rem;
-    /* Legacy vars kept for compatibility */
+    /* brand */
+    --indigo: #4f46e5;
     --foreground-legacy: #1e293b;
     --rose: #C4547A;
     --gold: #C9A84C;

@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import type { ReviewCategory } from "@/lib/types";
-import { REVIEW_CATEGORIES } from "@/lib/types";
+import { deriveStatus, derivePercentage } from "@/lib/types";
+
+interface CategoryInput {
+  category_name: string;
+  star_rating: number;
+  notes?: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, org_id")
-      .eq("id", user.id)
+      .select("id, role, business_id")
+      .eq("user_id", user.id)
       .single();
 
     if (profile?.role !== "manager") {
@@ -23,47 +25,43 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { employeeId, period, overallNotes, scores } = body as {
+    const { employeeId, period, overallNotes, categories } = body as {
       employeeId: string;
       period: string;
       overallNotes?: string;
-      scores: Array<{ category: ReviewCategory; rating: number; notes?: string }>;
+      categories: CategoryInput[];
     };
 
-    if (!employeeId || !period || !scores || scores.length !== 5) {
-      return NextResponse.json({ error: "All 5 category scores are required" }, { status: 400 });
+    if (!employeeId || !period || !categories || categories.length === 0) {
+      return NextResponse.json({ error: "Employee, period, and categories are required" }, { status: 400 });
     }
 
-    // Validate categories
-    const validCategories = REVIEW_CATEGORIES.map((c) => c.key);
-    const submittedCategories = scores.map((s) => s.category);
-    const missingCategories = validCategories.filter((c) => !submittedCategories.includes(c));
-    if (missingCategories.length > 0) {
-      return NextResponse.json({ error: `Missing categories: ${missingCategories.join(", ")}` }, { status: 400 });
-    }
-
-    // Verify employee is in same org
+    // Validate employee is in same business
     const { data: employee } = await supabase
       .from("profiles")
-      .select("id, org_id")
+      .select("id")
       .eq("id", employeeId)
-      .eq("org_id", profile.org_id)
+      .eq("business_id", profile.business_id)
       .single();
 
     if (!employee) {
-      return NextResponse.json({ error: "Employee not found in your organization" }, { status: 404 });
+      return NextResponse.json({ error: "Employee not found in your business" }, { status: 404 });
     }
 
-    const serviceClient = await createServiceClient();
+    // Compute overall score (average star rating)
+    const avgStars = categories.reduce((s, c) => s + c.star_rating, 0) / categories.length;
+    const overallScore = Math.round(avgStars * 100) / 100;
 
-    // Create review
-    const { data: review, error: reviewError } = await serviceClient
-      .from("performance_reviews")
+    const service = await createServiceClient();
+
+    const { data: review, error: reviewError } = await service
+      .from("reviews")
       .insert({
-        org_id: profile.org_id,
-        employee_id: employeeId,
-        manager_id: user.id,
+        business_id:   profile.business_id,
+        manager_id:    profile.id,
+        employee_id:   employeeId,
         period,
+        overall_score: overallScore,
         overall_notes: overallNotes ?? null,
       })
       .select()
@@ -73,21 +71,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: reviewError?.message ?? "Failed to create review" }, { status: 500 });
     }
 
-    // Insert scores
-    const scoreInserts = scores.map((s) => ({
-      review_id: review.id,
-      category: s.category,
-      rating: s.rating,
-      notes: s.notes ?? null,
+    const categoryRows = categories.map((c) => ({
+      review_id:        review.id,
+      category_name:    c.category_name,
+      star_rating:      c.star_rating,
+      percentage_score: derivePercentage(c.star_rating),
+      status:           deriveStatus(c.star_rating),
+      notes:            c.notes ?? null,
     }));
 
-    const { error: scoresError } = await serviceClient
-      .from("review_scores")
-      .insert(scoreInserts);
+    const { error: catError } = await service.from("review_categories").insert(categoryRows);
 
-    if (scoresError) {
-      await serviceClient.from("performance_reviews").delete().eq("id", review.id);
-      return NextResponse.json({ error: scoresError.message }, { status: 500 });
+    if (catError) {
+      await service.from("reviews").delete().eq("id", review.id);
+      return NextResponse.json({ error: catError.message }, { status: 500 });
     }
 
     return NextResponse.json({ review }, { status: 201 });
@@ -100,40 +97,33 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, org_id")
-      .eq("id", user.id)
+      .select("id, role, business_id")
+      .eq("user_id", user.id)
       .single();
 
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
 
     let query = supabase
-      .from("performance_reviews")
-      .select("*, review_scores(*), employee:profiles!employee_id(full_name, email, title), manager:profiles!manager_id(full_name)")
+      .from("reviews")
+      .select(
+        "*, review_categories(*), employee:profiles!employee_id(id, full_name, avatar_initials), manager:profiles!manager_id(id, full_name)"
+      )
       .order("created_at", { ascending: false });
 
     if (profile?.role === "manager") {
-      query = query.eq("org_id", profile.org_id!);
-      if (employeeId) {
-        query = query.eq("employee_id", employeeId);
-      }
+      query = query.eq("business_id", profile.business_id!);
+      if (employeeId) query = query.eq("employee_id", employeeId);
     } else {
-      // Employee can only see their own
-      query = query.eq("employee_id", user.id);
+      query = query.eq("employee_id", profile!.id);
     }
 
     const { data: reviews, error } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     return NextResponse.json(reviews ?? []);
   } catch {
