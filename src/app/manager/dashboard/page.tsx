@@ -1,7 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { Users, Star, ClipboardList, TrendingUp, ChevronRight } from "lucide-react";
-import type { Review } from "@/lib/types";
+import { Users, TrendingUp, AlertCircle } from "lucide-react";
+import { EmployeeTable } from "@/components/standpoint/EmployeeTable";
+import type { EmployeeRow } from "@/components/standpoint/EmployeeTable";
+import type { CategoryStatus } from "@/lib/types";
+
+function statusFromPct(pct: number): CategoryStatus {
+  if (pct >= 80) return "strong";
+  if (pct >= 60) return "developing";
+  return "needs_work";
+}
+
+function employeeIsDue(lastReviewedAt: string | null): boolean {
+  if (!lastReviewedAt) return true;
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  return new Date(lastReviewedAt) < thirtyDaysAgo;
+}
+
+type ReviewRow = {
+  id: string;
+  employee_id: string;
+  overall_score: number | null;
+  created_at: string;
+  review_categories: { percentage_score: number }[];
+};
 
 export default async function ManagerDashboard() {
   const supabase = await createClient();
@@ -13,157 +35,154 @@ export default async function ManagerDashboard() {
     .eq("user_id", user!.id)
     .single();
 
-  const [{ data: employees }, { data: reviews }, { data: business }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, avatar_initials, email")
-      .eq("business_id", profile!.business_id)
-      .eq("role", "employee"),
-    supabase
-      .from("reviews")
-      .select("*, review_categories(*), employee:profiles!employee_id(full_name, avatar_initials)")
-      .eq("business_id", profile!.business_id)
-      .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("businesses")
-      .select("name, plan")
-      .eq("id", profile!.business_id)
-      .single(),
-  ]);
+  const businessId = profile!.business_id;
 
-  const totalReviews  = reviews?.length ?? 0;
-  const employeeCount = employees?.length ?? 0;
+  const [{ data: rawEmployees }, { data: rawReviews }, { data: business }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, avatar_initials, role")
+        .eq("business_id", businessId)
+        .eq("role", "employee")
+        .order("full_name"),
+      supabase
+        .from("reviews")
+        .select("id, employee_id, overall_score, created_at, review_categories(percentage_score)")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("businesses")
+        .select("name, plan, join_code")
+        .eq("id", businessId)
+        .single(),
+    ]);
 
-  const allCategoryScores = (reviews as Review[] ?? []).flatMap((r) => r.review_categories ?? []);
-  const globalAvg =
-    allCategoryScores.length > 0
-      ? allCategoryScores.reduce((s, c) => s + c.star_rating, 0) / allCategoryScores.length
-      : null;
+  const reviews = (rawReviews ?? []) as ReviewRow[];
 
-  // Per-category averages across all reviews
-  const catMap: Record<string, number[]> = {};
-  allCategoryScores.forEach((c) => {
-    if (!catMap[c.category_name]) catMap[c.category_name] = [];
-    catMap[c.category_name].push(c.star_rating);
+  // Group reviews by employee (already sorted desc, so first = most recent)
+  const reviewsByEmployee: Record<string, ReviewRow[]> = {};
+  for (const r of reviews) {
+    if (!reviewsByEmployee[r.employee_id]) reviewsByEmployee[r.employee_id] = [];
+    reviewsByEmployee[r.employee_id].push(r);
+  }
+
+  // Build per-employee rows
+  const employeeRows: EmployeeRow[] = (rawEmployees ?? []).map((emp) => {
+    const empReviews = reviewsByEmployee[emp.id] ?? [];
+
+    // Avg score across all reviews: use category percentage_scores if available
+    let avgScore: number | null = null;
+    if (empReviews.length > 0) {
+      const allPcts: number[] = empReviews.flatMap((r) => {
+        const cats = r.review_categories;
+        if (cats.length > 0) return cats.map((c) => c.percentage_score);
+        // Fallback: overall_score is avg star rating (1–5); *20 converts to %
+        return r.overall_score !== null ? [r.overall_score * 20] : [];
+      });
+      avgScore =
+        allPcts.length > 0
+          ? allPcts.reduce((a, b) => a + b, 0) / allPcts.length
+          : null;
+    }
+
+    const lastReviewedAt = empReviews[0]?.created_at ?? null;
+
+    return {
+      id:             emp.id,
+      full_name:      emp.full_name,
+      avatar_initials: emp.avatar_initials,
+      role:           emp.role,
+      avgScore,
+      status:         avgScore !== null ? statusFromPct(avgScore) : null,
+      lastReviewedAt,
+      isDue:          employeeIsDue(lastReviewedAt),
+    };
   });
-  const catAverages = Object.entries(catMap).map(([name, vals]) => ({
-    name,
-    avg: vals.reduce((a, b) => a + b, 0) / vals.length,
-  })).sort((a, b) => b.avg - a.avg);
+
+  // KPI calculations
+  const totalEmployees = employeeRows.length;
+  const scoredEmployees = employeeRows.filter((e) => e.avgScore !== null);
+  const teamAvgPct =
+    scoredEmployees.length > 0
+      ? Math.round(
+          scoredEmployees.reduce((s, e) => s + e.avgScore!, 0) / scoredEmployees.length
+        )
+      : null;
+  const dueCount = employeeRows.filter((e) => e.isDue).length;
+
+  const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
   return (
     <div className="space-y-8">
+      {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {profile?.full_name?.split(" ")[0]}
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">{business?.name} · Manager Overview</p>
+        <h1 className="text-2xl font-bold text-gray-900">Hey, {firstName} 👋</h1>
+        <p className="text-gray-500 text-sm mt-1">
+          {business?.name} · Manager Dashboard
+        </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {[
-          { icon: Users,       value: employeeCount,                           label: "Employees",  color: "bg-indigo-50 text-[#4f46e5]" },
-          { icon: ClipboardList, value: totalReviews,                          label: "Reviews",    color: "bg-emerald-50 text-emerald-600" },
-          { icon: Star,        value: globalAvg !== null ? globalAvg.toFixed(1) : "—", label: "Avg Rating", color: "bg-amber-50 text-amber-500" },
-        ].map(({ icon: Icon, value, label, color }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm col-span-1">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${color.split(" ")[0]}`}>
-                <Icon className={`w-5 h-5 ${color.split(" ")[1]}`} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-                <p className="text-xs text-gray-500">{label}</p>
-              </div>
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <Users className="w-5 h-5 text-[#4f46e5]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
+              <p className="text-xs text-gray-500">Total Employees</p>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Quick actions */}
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/manager/reviews/new"
-          className="inline-flex items-center gap-2 bg-[#4f46e5] text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-[#4338ca] transition-colors"
-        >
-          <ClipboardList className="w-4 h-4" /> New Review
-        </Link>
-        <Link
-          href="/manager/employees"
-          className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Users className="w-4 h-4" /> Manage Team
-        </Link>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Category performance */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-[#4f46e5]" />
-            <h2 className="font-semibold text-gray-900">Team Performance</h2>
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-50 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">
+                {teamAvgPct !== null ? `${teamAvgPct}%` : "—"}
+              </p>
+              <p className="text-xs text-gray-500">Avg Team Score</p>
+            </div>
           </div>
-          {catAverages.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No reviews yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {catAverages.map((cat) => (
-                <div key={cat.name}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{cat.name}</span>
-                    <span className="font-medium text-gray-900">{cat.avg.toFixed(1)}/5</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div
-                      className="bg-[#4f46e5] h-2 rounded-full"
-                      style={{ width: `${(cat.avg / 5) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${dueCount > 0 ? "bg-amber-50" : "bg-gray-50"}`}>
+              <AlertCircle
+                className={`w-5 h-5 ${dueCount > 0 ? "text-amber-500" : "text-gray-400"}`}
+              />
+            </div>
+            <div>
+              <p
+                className={`text-2xl font-bold ${dueCount > 0 ? "text-amber-600" : "text-gray-900"}`}
+              >
+                {dueCount}
+              </p>
+              <p className="text-xs text-gray-500">Due for Review</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Employee table */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Your Team</h2>
+          {business?.join_code && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              Join code:
+              <span className="font-mono font-bold text-[#4f46e5] bg-[#4f46e5]/8 px-2 py-0.5 rounded">
+                {business.join_code}
+              </span>
             </div>
           )}
         </div>
-
-        {/* Recent reviews */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Recent Reviews</h2>
-            <Link href="/manager/employees" className="text-xs text-[#4f46e5] hover:underline flex items-center gap-1">
-              View all <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-          {totalReviews === 0 ? (
-            <p className="text-sm text-gray-400 italic">No reviews submitted yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {(reviews as Review[]).map((r) => {
-                const emp = r.employee as { full_name: string; avatar_initials: string } | null;
-                return (
-                  <div key={r.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#4f46e5]/10 flex items-center justify-center text-[#4f46e5] text-xs font-bold">
-                        {emp?.avatar_initials ?? "?"}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{emp?.full_name ?? "Unknown"}</p>
-                        <p className="text-xs text-gray-500">{r.period}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="text-sm font-semibold text-gray-900">
-                        {r.overall_score?.toFixed(1) ?? "—"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <EmployeeTable employees={employeeRows} />
       </div>
 
       {/* Pro upsell */}
@@ -171,14 +190,15 @@ export default async function ManagerDashboard() {
         <div className="rounded-xl bg-[#4f46e5] p-6 text-white">
           <h3 className="font-bold text-lg mb-1">Unlock AI Coaching Summaries</h3>
           <p className="text-indigo-200 text-sm mb-4">
-            Upgrade to Pro and get Claude-powered coaching summaries for every review — personalized for each employee.
+            Upgrade to Pro and get Claude-powered coaching summaries for every review —
+            personalized for each employee.
           </p>
-          <Link
+          <a
             href="/billing"
             className="inline-flex items-center gap-1 bg-white text-[#4f46e5] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
           >
             Upgrade to Pro →
-          </Link>
+          </a>
         </div>
       )}
     </div>
