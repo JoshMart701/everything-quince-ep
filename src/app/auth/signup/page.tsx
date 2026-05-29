@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, Briefcase, Users, Eye, EyeOff, Loader2, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import type { MemberRole } from "@/lib/types";
 
 type Step = "role" | "details";
@@ -50,6 +51,11 @@ export default function SignupPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Signup failed");
+
+      // Account and profile created — now sign in to establish a browser session
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw new Error("Account created. Please sign in.");
 
       router.push(role === "manager" ? "/manager/dashboard" : "/employee/dashboard");
       router.refresh();

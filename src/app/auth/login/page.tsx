@@ -32,22 +32,18 @@ function LoginForm() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
+    const { data: profile } = user
+      ? await supabase.from("profiles").select("role").eq("user_id", user.id).single()
+      : { data: null };
 
-      router.push(
-        redirect
-          ? redirect
-          : profile?.role === "manager"
-            ? "/manager/dashboard"
-            : "/employee/dashboard"
-      );
-      router.refresh();
-    }
+    router.push(
+      redirect
+        ? redirect
+        : profile?.role === "manager"
+          ? "/manager/dashboard"
+          : "/employee/dashboard"
+    );
+    router.refresh();
   };
 
   return (

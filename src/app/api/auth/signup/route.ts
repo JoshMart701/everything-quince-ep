@@ -58,15 +58,17 @@ export async function POST(request: NextRequest) {
     const avatarInitials = computeInitials(fullName);
 
     if (role === "manager") {
-      // Create business with unique join code
+      // Generate a collision-free join code (up to 5 attempts; DB unique constraint is the final guard)
       let code = generateJoinCode();
-      // Ensure uniqueness (retry once)
-      const { data: existing } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("join_code", code)
-        .single();
-      if (existing) code = generateJoinCode();
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const { data: existing } = await supabase
+          .from("businesses")
+          .select("id")
+          .eq("join_code", code)
+          .maybeSingle();
+        if (!existing) break;
+        code = generateJoinCode();
+      }
 
       const { data: business, error: bizError } = await supabase
         .from("businesses")
@@ -111,9 +113,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: profileError.message }, { status: 500 });
       }
     }
-
-    // Sign in to create a session
-    await supabase.auth.signInWithPassword({ email, password });
 
     return NextResponse.json({ success: true });
   } catch {

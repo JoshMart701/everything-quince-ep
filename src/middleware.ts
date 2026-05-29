@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect logged-in users away from auth pages
-  if (authRoutes.some((r) => pathname === r)) {
+  if (authRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
