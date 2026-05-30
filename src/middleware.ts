@@ -2,7 +2,6 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // Skip Supabase entirely if env vars are not configured (e.g. during build).
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next({ request });
   }
@@ -30,42 +29,38 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session without blocking
   const { data: { user } } = await supabase.auth.getUser();
-
   const { pathname } = request.nextUrl;
 
-  // Protect vendor dashboard routes
-  const vendorProtected = [
-    "/vendor/dashboard",
-    "/vendor/leads",
-    "/vendor/profile",
-    "/vendor/reviews",
-    "/vendor/analytics",
-    "/vendor/calendar",
-    "/vendor/clients",
-    "/vendor/invoices",
-  ];
+  const authRoutes = ["/auth/login", "/auth/signup"];
+  const managerRoutes = ["/manager"];
+  const employeeRoutes = ["/employee"];
 
-  if (vendorProtected.some(p => pathname.startsWith(p)) && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/vendor/login";
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (!user) {
+    if (
+      managerRoutes.some((r) => pathname.startsWith(r)) ||
+      employeeRoutes.some((r) => pathname.startsWith(r)) ||
+      pathname.startsWith("/billing")
+    ) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/auth/login";
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return supabaseResponse;
   }
 
-  // Protect admin
-  if (pathname.startsWith("/admin") && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/vendor/login";
-    return NextResponse.redirect(loginUrl);
-  }
+  // Redirect logged-in users away from auth pages
+  if (authRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
 
-  // Redirect already-logged-in users away from login/signup
-  if ((pathname === "/vendor/login" || pathname === "/vendor/signup") && user) {
-    const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = "/vendor/dashboard";
-    return NextResponse.redirect(dashUrl);
+    const dest = request.nextUrl.clone();
+    dest.pathname = profile?.role === "manager" ? "/manager/dashboard" : "/employee/dashboard";
+    return NextResponse.redirect(dest);
   }
 
   return supabaseResponse;
@@ -73,6 +68,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2)$).*)",
   ],
 };
