@@ -17,7 +17,9 @@ export interface EmployeeRow {
 }
 
 interface EmployeeTableProps {
-  employees: EmployeeRow[];
+  employees:  EmployeeRow[];
+  businessId: string;
+  managerId:  string;
 }
 
 const STATUS_STYLES: Record<CategoryStatus, string> = {
@@ -41,7 +43,7 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function EmployeeTable({ employees }: EmployeeTableProps) {
+export function EmployeeTable({ employees, businessId, managerId }: EmployeeTableProps) {
   const [selected, setSelected] = useState<EmployeeRow | null>(null);
 
   if (employees.length === 0) {
@@ -54,7 +56,7 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
             Share your join code with your team to get started.
           </p>
         </div>
-        <ReviewSlideOver employee={null} onClose={() => setSelected(null)} />
+        <ReviewSlideOver employee={null} onClose={() => setSelected(null)} businessId={businessId} managerId={managerId} />
       </>
     );
   }
@@ -194,6 +196,8 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
       <ReviewSlideOver
         employee={selected}
         onClose={() => setSelected(null)}
+        businessId={businessId}
+        managerId={managerId}
       />
     </>
   );

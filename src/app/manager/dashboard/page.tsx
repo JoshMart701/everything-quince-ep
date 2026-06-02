@@ -182,7 +182,7 @@ export default async function ManagerDashboard() {
             </div>
           )}
         </div>
-        <EmployeeTable employees={employeeRows} />
+        <EmployeeTable employees={employeeRows} businessId={businessId} managerId={profile!.id} />
       </div>
 
       {/* Pro upsell */}

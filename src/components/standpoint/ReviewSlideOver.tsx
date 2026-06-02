@@ -5,6 +5,7 @@ import { X, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { StarRating } from "@/components/standpoint/StarRating";
+import { submitReview } from "@/app/actions/submit-review";
 import type { CategoryStatus } from "@/lib/types";
 
 const REVIEW_CATEGORIES = [
@@ -15,7 +16,7 @@ const REVIEW_CATEGORIES = [
   "Communication",
 ] as const;
 
-type SubmitStep = "idle" | "saving" | "coaching" | "email";
+type SubmitStep = "idle" | "saving";
 
 interface CategoryState {
   name: string;
@@ -31,8 +32,10 @@ export interface SlideOverEmployee {
 }
 
 interface ReviewSlideOverProps {
-  employee: SlideOverEmployee | null;
-  onClose: () => void;
+  employee:   SlideOverEmployee | null;
+  onClose:    () => void;
+  businessId: string;
+  managerId:  string;
 }
 
 const STATUS_STYLES: Record<CategoryStatus, string> = {
@@ -67,7 +70,7 @@ function freshCategories(): CategoryState[] {
   }));
 }
 
-export function ReviewSlideOver({ employee, onClose }: ReviewSlideOverProps) {
+export function ReviewSlideOver({ employee, onClose, businessId, managerId }: ReviewSlideOverProps) {
   const router = useRouter();
 
   const [period, setPeriod]         = useState(defaultPeriod);
@@ -108,10 +111,8 @@ export function ReviewSlideOver({ employee, onClose }: ReviewSlideOverProps) {
       : null;
 
   const stepLabel: Record<SubmitStep, string> = {
-    idle:     "",
-    saving:   "Saving review…",
-    coaching: "Generating AI coaching summary…",
-    email:    "Notifying employee…",
+    idle:   "",
+    saving: "Saving review, generating AI coaching summary…",
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,46 +125,25 @@ export function ReviewSlideOver({ employee, onClose }: ReviewSlideOverProps) {
     }
 
     setError(null);
+    setStep("saving");
 
     try {
-      // 1 — save review
-      setStep("saving");
-      const reviewRes = await fetch("/api/reviews", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          employeeId: employee.id,
-          period,
-          categories: categories.map((c) => ({
-            category_name: c.name,
-            star_rating:   c.stars,
-            notes:         c.notes.trim() || undefined,
-          })),
-        }),
-      });
-
-      const reviewData = await reviewRes.json() as { review?: { id: string }; error?: string };
-      if (!reviewRes.ok) throw new Error(reviewData.error ?? "Failed to save review");
-      const reviewId = reviewData.review!.id;
-
-      // 2 — generate AI coaching summary (non-fatal if it fails)
-      setStep("coaching");
-      try {
-        await fetch(`/api/reviews/${reviewId}/coaching`, { method: "POST" });
-      } catch {
-        // Coaching failure is non-fatal — review is already saved
-      }
-
-      // 3 — send email notification
-      setStep("email");
-      await fetch("/api/send-review-email", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ reviewId }),
+      const result = await submitReview({
+        employeeId: employee.id,
+        businessId,
+        managerId,
+        period,
+        categories: categories.map((c) => ({
+          name:       c.name,
+          stars:      c.stars,
+          percentage: c.stars * 20,
+          status:     statusFromPct(c.stars * 20),
+          notes:      c.notes.trim(),
+        })),
       });
 
       toast.success(`Review submitted for ${employee.full_name}!`, {
-        description: "Coaching summary generated and employee notified.",
+        description: `${result.overallScore}% overall · AI coaching generated · Email on its way.`,
       });
 
       onClose();
