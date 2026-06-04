@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { AddToHomeScreen } from "@/components/standpoint/AddToHomeScreen";
 
 const geist = localFont({
   src: [{ path: "./fonts/GeistVF.woff", weight: "100 900", style: "normal" }],
@@ -9,7 +11,15 @@ const geist = localFont({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#4f46e5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
+  manifest: "/manifests/default.json",
   title: {
     default: "Standpoint | Performance Reviews Made Clear",
     template: "%s | Standpoint",
@@ -44,6 +54,8 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-white text-gray-900">
         {children}
         <Toaster position="top-right" richColors />
+        <ServiceWorkerRegistration />
+        <AddToHomeScreen />
       </body>
     </html>
   );

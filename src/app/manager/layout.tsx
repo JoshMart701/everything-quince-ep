@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/standpoint/Navbar";
+
+export const metadata: Metadata = {
+  manifest: "/manifests/manager.json",
+};
 
 export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();

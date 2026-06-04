@@ -74,12 +74,12 @@ export default async function MyStandingPage() {
   const latestCats    = (latest?.review_categories ?? []) as ReviewCategory[];
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6" style={{ paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))" }}>
 
       {/* Top header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name}</h1>
+      <div className="flex items-start justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 truncate">{profile?.full_name}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{biz?.name}</p>
           {latest && (
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400">
@@ -112,20 +112,20 @@ export default async function MyStandingPage() {
             Overall Standing
           </p>
 
-          <div className="flex items-end gap-4 mb-4">
+          <div className="mb-4">
             <span
-              className={`${serif.className} text-7xl font-normal leading-none`}
+              className={`${serif.className} text-6xl sm:text-7xl font-normal leading-none block`}
             >
               {latestAvgPct}%
             </span>
-            <div className="mb-2 flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-2 mt-3">
               <span
-                className={`text-sm font-semibold px-3 py-1 rounded-full border ${STATUS_STYLES[overallStatus].hero}`}
+                className={`text-sm font-semibold px-3 py-1.5 rounded-full border ${STATUS_STYLES[overallStatus].hero}`}
               >
                 {STATUS_STYLES[overallStatus].label}
               </span>
               {trend !== null && (
-                <span className="text-sm font-semibold text-white/80">
+                <span className="text-sm font-semibold text-white/75">
                   {trend >= 0 ? `↑ +${trend}%` : `↓ ${trend}%`} vs last review
                 </span>
               )}
@@ -146,7 +146,7 @@ export default async function MyStandingPage() {
       {latestCats.length > 0 && (
         <div>
           <h2 className="font-semibold text-gray-900 mb-3 text-sm">Category Scores</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {latestCats.map((cat) => {
               const s = STATUS_STYLES[cat.status];
               return (
@@ -154,13 +154,12 @@ export default async function MyStandingPage() {
                   key={cat.id}
                   className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-gray-800">
-                      {CATEGORY_EMOJIS[cat.category_name] ?? ""}{" "}
-                      {cat.category_name}
+                  <div className="flex flex-col gap-1.5 mb-2">
+                    <span className="text-sm font-semibold text-gray-800 leading-tight">
+                      {CATEGORY_EMOJIS[cat.category_name] ?? ""} {cat.category_name}
                     </span>
                     <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${s.badge}`}
+                      className={`self-start text-xs font-semibold px-2 py-0.5 rounded-full border ${s.badge}`}
                     >
                       {s.label}
                     </span>
