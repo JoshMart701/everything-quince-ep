@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Loader2, Sparkles, ChevronDown, ChevronUp, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { StarRating } from "@/components/standpoint/StarRating";
@@ -32,10 +32,11 @@ export interface SlideOverEmployee {
 }
 
 interface ReviewSlideOverProps {
-  employee:   SlideOverEmployee | null;
-  onClose:    () => void;
-  businessId: string;
-  managerId:  string;
+  employee:      SlideOverEmployee | null;
+  onClose:       () => void;
+  businessId:    string;
+  managerId:     string;
+  reviewsLocked: boolean;
 }
 
 const STATUS_STYLES: Record<CategoryStatus, string> = {
@@ -70,7 +71,7 @@ function freshCategories(): CategoryState[] {
   }));
 }
 
-export function ReviewSlideOver({ employee, onClose, businessId, managerId }: ReviewSlideOverProps) {
+export function ReviewSlideOver({ employee, onClose, businessId, managerId, reviewsLocked }: ReviewSlideOverProps) {
   const router = useRouter();
 
   const [period, setPeriod]         = useState(defaultPeriod);
@@ -197,8 +198,27 @@ export function ReviewSlideOver({ employee, onClose, businessId, managerId }: Re
           </button>
         </div>
 
+        {/* Locked state */}
+        {reviewsLocked && (
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-16 text-center">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Lock className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">Subscription required</h3>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              Your subscription has ended. Resubscribe to keep submitting reviews — past reviews are still available.
+            </p>
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-2 bg-[#4f46e5] text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-[#4338ca] transition-colors"
+            >
+              View plans
+            </a>
+          </div>
+        )}
+
         {/* Scrollable form body */}
-        <div className="flex-1 overflow-y-auto">
+        {!reviewsLocked && <div className="flex-1 overflow-y-auto">
           <form id="review-slide-form" onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Period */}
             <div>
@@ -299,10 +319,10 @@ export function ReviewSlideOver({ employee, onClose, businessId, managerId }: Re
               <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
           </form>
-        </div>
+        </div>}
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0">
+        {!reviewsLocked && <div className="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0">
           {submitting && (
             <p className="text-xs text-gray-400 text-center mb-2">{stepLabel[step]}</p>
           )}
@@ -319,7 +339,7 @@ export function ReviewSlideOver({ employee, onClose, businessId, managerId }: Re
             )}
             {submitting ? "Submitting…" : "Submit & Generate Coaching Summary"}
           </button>
-        </div>
+        </div>}
       </div>
     </>
   );

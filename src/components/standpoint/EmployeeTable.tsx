@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Lock } from "lucide-react";
 import { ReviewSlideOver } from "@/components/standpoint/ReviewSlideOver";
 import type { CategoryStatus } from "@/lib/types";
 
@@ -17,9 +17,10 @@ export interface EmployeeRow {
 }
 
 interface EmployeeTableProps {
-  employees:  EmployeeRow[];
-  businessId: string;
-  managerId:  string;
+  employees:     EmployeeRow[];
+  businessId:    string;
+  managerId:     string;
+  reviewsLocked: boolean;
 }
 
 const STATUS_STYLES: Record<CategoryStatus, string> = {
@@ -43,7 +44,7 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function EmployeeTable({ employees, businessId, managerId }: EmployeeTableProps) {
+export function EmployeeTable({ employees, businessId, managerId, reviewsLocked }: EmployeeTableProps) {
   const [selected, setSelected] = useState<EmployeeRow | null>(null);
 
   if (employees.length === 0) {
@@ -56,7 +57,7 @@ export function EmployeeTable({ employees, businessId, managerId }: EmployeeTabl
             Share your join code with your team to get started.
           </p>
         </div>
-        <ReviewSlideOver employee={null} onClose={() => setSelected(null)} businessId={businessId} managerId={managerId} />
+        <ReviewSlideOver employee={null} onClose={() => setSelected(null)} businessId={businessId} managerId={managerId} reviewsLocked={reviewsLocked} />
       </>
     );
   }
@@ -126,10 +127,16 @@ export function EmployeeTable({ employees, businessId, managerId }: EmployeeTabl
                 <td className="px-4 py-4 text-right">
                   <button
                     onClick={() => setSelected(emp)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#4f46e5] hover:bg-[#4338ca] px-3 py-1.5 rounded-lg transition-colors"
+                    disabled={reviewsLocked}
+                    title={reviewsLocked ? "Subscription required to submit reviews" : undefined}
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                      reviewsLocked
+                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                        : "text-white bg-[#4f46e5] hover:bg-[#4338ca]"
+                    }`}
                   >
-                    <ClipboardList className="w-3.5 h-3.5" />
-                    Review
+                    {reviewsLocked ? <Lock className="w-3.5 h-3.5" /> : <ClipboardList className="w-3.5 h-3.5" />}
+                    {reviewsLocked ? "Locked" : "Review"}
                   </button>
                 </td>
               </tr>
@@ -179,10 +186,16 @@ export function EmployeeTable({ employees, businessId, managerId }: EmployeeTabl
               </div>
               <button
                 onClick={() => setSelected(emp)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#4f46e5] hover:bg-[#4338ca] px-3 py-1.5 rounded-lg transition-colors"
+                disabled={reviewsLocked}
+                title={reviewsLocked ? "Subscription required to submit reviews" : undefined}
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                  reviewsLocked
+                    ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                    : "text-white bg-[#4f46e5] hover:bg-[#4338ca]"
+                }`}
               >
-                <ClipboardList className="w-3.5 h-3.5" />
-                Review
+                {reviewsLocked ? <Lock className="w-3.5 h-3.5" /> : <ClipboardList className="w-3.5 h-3.5" />}
+                {reviewsLocked ? "Locked" : "Review"}
               </button>
             </div>
 
@@ -198,6 +211,7 @@ export function EmployeeTable({ employees, businessId, managerId }: EmployeeTabl
         onClose={() => setSelected(null)}
         businessId={businessId}
         managerId={managerId}
+        reviewsLocked={reviewsLocked}
       />
     </>
   );

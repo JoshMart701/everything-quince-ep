@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { Users, TrendingUp, AlertCircle } from "lucide-react";
 import { EmployeeTable } from "@/components/standpoint/EmployeeTable";
+import { TrialBanner } from "@/components/standpoint/TrialBanner";
 import type { EmployeeRow } from "@/components/standpoint/EmployeeTable";
 import type { CategoryStatus } from "@/lib/types";
+import { canSubmitReviews, trialDaysLeft, type SubscriptionStatus } from "@/lib/stripe";
 
 function statusFromPct(pct: number): CategoryStatus {
   if (pct >= 80) return "strong";
@@ -52,7 +54,7 @@ export default async function ManagerDashboard() {
         .order("created_at", { ascending: false }),
       supabase
         .from("businesses")
-        .select("name, plan, join_code")
+        .select("name, plan, join_code, subscription_status, trial_ends_at, stripe_customer_id")
         .eq("id", businessId)
         .single(),
     ]);
@@ -112,8 +114,19 @@ export default async function ManagerDashboard() {
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
+  const subStatus  = (business?.subscription_status ?? null) as SubscriptionStatus;
+  const daysLeft   = trialDaysLeft(business?.trial_ends_at ?? null);
+  const reviewsLocked = !canSubmitReviews(subStatus);
+
   return (
     <div className="space-y-8">
+      {/* Trial / billing banner */}
+      <TrialBanner
+        status={subStatus}
+        daysLeft={daysLeft}
+        hasBilling={!!business?.stripe_customer_id}
+      />
+
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hey, {firstName} 👋</h1>
@@ -182,22 +195,27 @@ export default async function ManagerDashboard() {
             </div>
           )}
         </div>
-        <EmployeeTable employees={employeeRows} businessId={businessId} managerId={profile!.id} />
+        <EmployeeTable
+          employees={employeeRows}
+          businessId={businessId}
+          managerId={profile!.id}
+          reviewsLocked={reviewsLocked}
+        />
       </div>
 
-      {/* Pro upsell */}
-      {business?.plan === "free" && (
+      {/* Upsell: no active subscription yet */}
+      {!subStatus && (
         <div className="rounded-xl bg-[#4f46e5] p-6 text-white">
-          <h3 className="font-bold text-lg mb-1">Unlock AI Coaching Summaries</h3>
+          <h3 className="font-bold text-lg mb-1">Start your free trial</h3>
           <p className="text-indigo-200 text-sm mb-4">
-            Upgrade to Pro and get Claude-powered coaching summaries for every review —
-            personalized for each employee.
+            Get 14 days free — AI coaching summaries, unlimited reviews, and full team dashboards.
+            No credit card required.
           </p>
           <a
-            href="/billing"
+            href="/pricing"
             className="inline-flex items-center gap-1 bg-white text-[#4f46e5] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
           >
-            Upgrade to Pro →
+            View plans →
           </a>
         </div>
       )}
