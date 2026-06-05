@@ -1,8 +1,15 @@
 import Stripe from "stripe";
 
+export const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder",
+  { apiVersion: "2026-04-22.dahlia" }
+);
+
 export function createStripeClient(): Stripe {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+  return stripe;
 }
+
+export const STANDPOINT_PRO_PRICE_ID = process.env.STRIPE_STANDPOINT_PRICE_ID ?? "";
 
 export const PLANS = {
   free: {
@@ -59,3 +66,29 @@ export const PLANS = {
     },
   },
 } as const;
+
+// ── Standpoint billing ──────────────────────────────────────────────────────
+
+export const STANDPOINT_PRICES = {
+  starter_monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID ?? "",
+  starter_annual:  process.env.STRIPE_STARTER_ANNUAL_PRICE_ID  ?? "",
+  pro_monthly:     process.env.STRIPE_PRO_MONTHLY_PRICE_ID     ?? "",
+  pro_annual:      process.env.STRIPE_PRO_ANNUAL_PRICE_ID      ?? "",
+} as const;
+
+export type StandpointPriceKey = keyof typeof STANDPOINT_PRICES;
+
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | null;
+
+export function canSubmitReviews(status: SubscriptionStatus): boolean {
+  // null = no subscription started yet → allow (free/legacy access)
+  // canceled = explicitly ended → lock
+  return status !== "canceled";
+}
+
+export function trialDaysLeft(trialEndsAt: string | null): number | null {
+  if (!trialEndsAt) return null;
+  const ms = new Date(trialEndsAt).getTime() - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}

@@ -66,9 +66,9 @@ const config: Config = {
         },
       },
       fontFamily: {
+        sans: ["var(--font-geist)", "system-ui", "sans-serif"],
         heading: ["var(--font-playfair)", "Georgia", "serif"],
         body: ["var(--font-dm-sans)", "system-ui", "sans-serif"],
-        sans: ["var(--font-dm-sans)", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-quince": "linear-gradient(135deg, #3D1A2E 0%, #6b2d4f 50%, #C4547A 100%)",
