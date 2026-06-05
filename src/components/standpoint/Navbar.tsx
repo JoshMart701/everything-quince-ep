@@ -34,10 +34,16 @@ export function Navbar({ profile, businessName }: NavbarProps) {
 
         {isManager && (
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <Link href="/manager/dashboard"   className="hover:text-gray-900 transition-colors">Dashboard</Link>
-            <Link href="/manager/employees"   className="hover:text-gray-900 transition-colors">Team</Link>
-            <Link href="/manager/reviews/new" className="hover:text-gray-900 transition-colors">New Review</Link>
-            <Link href="/billing"             className="hover:text-gray-900 transition-colors">Billing</Link>
+            <Link href="/manager/dashboard"  className="hover:text-gray-900 transition-colors">Dashboard</Link>
+            <Link href="/manager/team"       className="hover:text-gray-900 transition-colors">Team</Link>
+            <Link href="/manager/settings"   className="hover:text-gray-900 transition-colors">Settings</Link>
+          </nav>
+        )}
+
+        {!isManager && (
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+            <Link href="/employee/my-standing" className="hover:text-gray-900 transition-colors">My Standing</Link>
+            <Link href="/employee/settings"    className="hover:text-gray-900 transition-colors">Settings</Link>
           </nav>
         )}
 

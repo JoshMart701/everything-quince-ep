@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const managerName   = ((review.manager as any).full_name as string).split(" ")[0];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const businessName  = (review.business as any).name as string;
-    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/my-standing`;
+    const dashboardUrl  = `${process.env.NEXT_PUBLIC_APP_URL}/employee/my-standing`;
 
     // ── 3. Send the email ──────────────────────────────────────────
     const { data: emailData, error: emailError } = await resend.emails.send({
