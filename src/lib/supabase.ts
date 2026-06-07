@@ -1,66 +1,31 @@
+"use client";
 /**
- * High-level auth helpers.
- * Client functions: import directly in "use client" components.
- * Server functions: import in Server Components or Route Handlers.
+ * Client-side auth helpers — safe to import in "use client" components.
+ * For server-side helpers see /lib/supabase-server.ts
  */
 
-// ── Client-side helpers ────────────────────────────────────────────────────
-
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 export async function signUp(email: string, password: string, fullName?: string) {
-  const supabase = createBrowserClient();
-  const { data, error } = await supabase.auth.signUp({
+  const supabase = createClient();
+  return supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { full_name: fullName ?? "" },
-    },
+    options: { data: { full_name: fullName ?? "" } },
   });
-  return { data, error };
 }
 
 export async function signIn(email: string, password: string) {
-  const supabase = createBrowserClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  return { data, error };
+  const supabase = createClient();
+  return supabase.auth.signInWithPassword({ email, password });
 }
 
 export async function signOut() {
-  const supabase = createBrowserClient();
-  const { error } = await supabase.auth.signOut();
-  return { error };
+  const supabase = createClient();
+  return supabase.auth.signOut();
 }
 
 export async function getClientUser() {
-  const supabase = createBrowserClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  return { user, error };
-}
-
-// ── Server-side helpers ────────────────────────────────────────────────────
-// These are async and must only be called from Server Components or
-// Route Handlers — never in "use client" modules.
-
-export async function getServerUser() {
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  return { user, error };
-}
-
-export async function getServerProfile() {
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { profile: null };
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-  return { profile };
+  const supabase = createClient();
+  return supabase.auth.getUser();
 }
