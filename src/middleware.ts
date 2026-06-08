@@ -30,12 +30,34 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session without blocking
+  // Refresh session — must not be removed or the session will break.
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
-  // Protect vendor dashboard routes
+  // ── /dashboard — amen-goodnight family app ────────────────────────────────
+  if (pathname.startsWith("/dashboard") && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // ── /onboarding — must be authenticated ───────────────────────────────────
+  if (pathname.startsWith("/onboarding") && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users away from login / signup
+  if ((pathname === "/login" || pathname === "/signup") && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // ── Vendor dashboard routes ───────────────────────────────────────────────
   const vendorProtected = [
     "/vendor/dashboard",
     "/vendor/leads",
@@ -48,24 +70,24 @@ export async function middleware(request: NextRequest) {
   ];
 
   if (vendorProtected.some(p => pathname.startsWith(p)) && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/vendor/login";
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = "/vendor/login";
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
   }
 
   // Protect admin
   if (pathname.startsWith("/admin") && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/vendor/login";
-    return NextResponse.redirect(loginUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = "/vendor/login";
+    return NextResponse.redirect(url);
   }
 
-  // Redirect already-logged-in users away from login/signup
+  // Redirect authenticated users away from vendor login/signup
   if ((pathname === "/vendor/login" || pathname === "/vendor/signup") && user) {
-    const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = "/vendor/dashboard";
-    return NextResponse.redirect(dashUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = "/vendor/dashboard";
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
